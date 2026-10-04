@@ -33,21 +33,28 @@ jobs:
         run: ./gradlew :app:shared:desktopTest :data:desktopTest --console=plain
 
       - name: Decode Signing Key
-        if: ${{ secrets.SIGNING_KEY != '' }}
+        # secrets cannot be referenced in an `if:` expression, so the secret is
+        # mapped to an env var and the presence check happens inside the script.
         env:
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
           KEYSTORE_PASS: ${{ secrets.KEY_STORE_PASSWORD }}
         run: |
           set -euo pipefail
-          printf '%s' '${{ secrets.SIGNING_KEY }}' | base64 -d > keystore.jks
+          # No signing secret configured: skip and let the build use its debug
+          # signing fallback (it only checks whether KEYSTORE_PATH exists).
+          if [ -z "$SIGNING_KEY" ]; then
+            echo "No SIGNING_KEY secret provided, release will be debug-signed"
+            exit 0
+          fi
+          printf '%s' "$SIGNING_KEY" | base64 -d > keystore.jks
           # Fail fast if the decoded secret is empty or not a valid keystore, instead of
           # producing a corrupt file that breaks signing with an unrelated error later.
           if [ ! -s keystore.jks ] ||
              ! keytool -list -keystore keystore.jks -storepass "$KEYSTORE_PASS" >/dev/null 2>&1; then
-            echo "::error::SIGNING_KEY is missing or is not a valid keystore"
+            echo "::error::SIGNING_KEY is not a valid keystore"
             exit 1
           fi
-          # Only expose the signing path when a verified keystore exists; without it the
-          # build falls back to the debug signing config automatically.
+          # Only expose the signing path when a verified keystore exists.
           echo "KEYSTORE_PATH=${GITHUB_WORKSPACE}/keystore.jks" >> "$GITHUB_ENV"
 
       - name: Build Release APK
