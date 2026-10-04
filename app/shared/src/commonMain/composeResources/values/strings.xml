@@ -86,11 +86,6 @@
     <string name="theme_navigation_badge_summary">Show the number of apps that can be updated</string>
     <string name="theme_dynamic_color">Dynamic color</string>
     <string name="theme_dynamic_color_summary">Extract colors from your wallpaper (Material You)</string>
-    <string name="theme_palette_style">Palette style</string>
-    <string name="theme_palette_style_summary">Style used by the dynamic color engine</string>
-    <string name="theme_color_spec">Color spec</string>
-    <string name="theme_color_spec_summary">Color specification version (MD3 / MD3 Expressive)</string>
-    <string name="theme_color_spec_downgraded">Auto-downgraded to Spec2021 (style not supported by Spec2025)</string>
     <string name="theme_appearance">Appearance</string>
     <string name="theme_appearance_system">Follow system</string>
     <string name="theme_appearance_light">Light</string>

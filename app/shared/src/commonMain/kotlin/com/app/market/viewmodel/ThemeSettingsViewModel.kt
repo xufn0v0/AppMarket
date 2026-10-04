@@ -5,9 +5,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.market.domain.model.preference.ThemeMode
 import com.app.market.domain.repository.ThemePreferencesRepository
-import com.app.market.domain.theme.MaterialDesignColors
-import com.app.market.domain.theme.MaterialDesignColors.MaterialColorSpec
-import com.app.market.domain.theme.MaterialDesignColors.MaterialTonalPaletteStyle
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -23,10 +20,6 @@ data class ThemeSettingsUiState(
     val enableNavigationBadge: Boolean = true,
     val enableDynamicColor: Boolean = false,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
-    val paletteStyle: MaterialTonalPaletteStyle = MaterialDesignColors.DEFAULT_PALETTE_STYLE,
-    val colorSpec: MaterialColorSpec = MaterialDesignColors.DEFAULT_SPEC,
-    /** 实际生效的规范版本（Spec2025 + 不兼容风格时自动降级为 Spec2021）。 */
-    val effectiveColorSpec: MaterialColorSpec = MaterialDesignColors.DEFAULT_SPEC,
     val showScaleDialog: Boolean = false,
     val enablePredictiveBack: Boolean = false,
     val pageScale: Float = 1f,
@@ -40,30 +33,15 @@ class ThemeSettingsViewModel(
         val enableFloatingBottomBar: Boolean,
         val enableDynamicColor: Boolean,
         val themeMode: ThemeMode,
-        val paletteStyle: MaterialTonalPaletteStyle,
-        val colorSpec: MaterialColorSpec,
     )
 
     private val appearance = combine(
-        combine(
-            preferences.enableBlur,
-            preferences.enableFloatingBottomBar,
-            preferences.enableDynamicColor,
-            preferences.themeMode,
-        ) { blur, floating, dynamicColor, themeMode ->
-            AppearancePreferences(
-                enableBlur = blur,
-                enableFloatingBottomBar = floating,
-                enableDynamicColor = dynamicColor,
-                themeMode = themeMode,
-                paletteStyle = MaterialDesignColors.DEFAULT_PALETTE_STYLE,
-                colorSpec = MaterialDesignColors.DEFAULT_SPEC,
-            )
-        },
-        preferences.paletteStyle,
-        preferences.colorSpec,
-    ) { appearance, paletteStyle, colorSpec ->
-        appearance.copy(paletteStyle = paletteStyle, colorSpec = colorSpec)
+        preferences.enableBlur,
+        preferences.enableFloatingBottomBar,
+        preferences.enableDynamicColor,
+        preferences.themeMode,
+    ) { blur, floating, dynamicColor, themeMode ->
+        AppearancePreferences(blur, floating, dynamicColor, themeMode)
     }
 
     private val showScaleDialog = MutableStateFlow(false)
@@ -76,17 +54,11 @@ class ThemeSettingsViewModel(
             preferences.enablePredictiveBack,
             preferences.pageScale,
         ) { appearance, glass, badge, predictiveBack, scale ->
-            val (effectiveSpec, _) = MaterialDesignColors.resolveSpecAndStyle(
-                appearance.colorSpec, appearance.paletteStyle,
-            )
             ThemeSettingsUiState(
                 enableBlur = appearance.enableBlur,
                 enableFloatingBottomBar = appearance.enableFloatingBottomBar,
                 enableDynamicColor = appearance.enableDynamicColor,
                 themeMode = appearance.themeMode,
-                paletteStyle = appearance.paletteStyle,
-                colorSpec = appearance.colorSpec,
-                effectiveColorSpec = effectiveSpec,
                 enableFloatingBottomBarBlur = glass,
                 enableNavigationBadge = badge,
                 enablePredictiveBack = predictiveBack,
@@ -104,8 +76,6 @@ class ThemeSettingsViewModel(
     fun setEnableNavigationBadge(value: Boolean) = persist { preferences.setEnableNavigationBadge(value) }
     fun setEnableDynamicColor(value: Boolean) = persist { preferences.setEnableDynamicColor(value) }
     fun setThemeMode(value: ThemeMode) = persist { preferences.setThemeMode(value) }
-    fun setPaletteStyle(value: MaterialTonalPaletteStyle) = persist { preferences.setPaletteStyle(value) }
-    fun setColorSpec(value: MaterialColorSpec) = persist { preferences.setColorSpec(value) }
 
     fun showScaleDialog() {
         showScaleDialog.value = true

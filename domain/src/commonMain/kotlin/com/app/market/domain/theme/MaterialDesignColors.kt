@@ -46,46 +46,6 @@ object MaterialDesignColors {
     val DEFAULT_PALETTE_STYLE: MaterialTonalPaletteStyle = MaterialTonalPaletteStyle.TONAL_SPOT
 
     /**
-     * Spec2025（MD3E）官方支持的调色板风格白名单。
-     *
-     * 依据 MIUI X / material-color-utilities 官方文档：Spec2025 仅与
-     * TonalSpot、Neutral、Vibrant、Expressive 四种风格兼容；其余风格在
-     * Spec2025 下未定义行为，必须自动降级为 Spec2021。
-     */
-    private val SPEC2025_SUPPORTED_STYLES: Set<MaterialTonalPaletteStyle> = setOf(
-        MaterialTonalPaletteStyle.TONAL_SPOT,
-        MaterialTonalPaletteStyle.NEUTRAL,
-        MaterialTonalPaletteStyle.VIBRANT,
-        MaterialTonalPaletteStyle.EXPRESSIVE,
-    )
-
-    /**
-     * 校验并自动降级不兼容的 [colorSpec] / [paletteStyle] 组合。
-     *
-     * 规则：
-     * - 当 [colorSpec] 为 [MaterialColorSpec.SPEC_2025] 且 [paletteStyle] 不在
-     *   [SPEC2025_SUPPORTED_STYLES] 中时，自动降级为 [MaterialColorSpec.SPEC_2021]；
-     * - 其余组合原样返回。
-     *
-     * 该函数为纯函数，供 UI 装配层（App.kt）与测试层共同调用，确保任何入口
-     * 进入 ThemeController 的参数组合都符合官方规范。
-     */
-    fun resolveSpecAndStyle(
-        colorSpec: MaterialColorSpec,
-        paletteStyle: MaterialTonalPaletteStyle,
-    ): Pair<MaterialColorSpec, MaterialTonalPaletteStyle> {
-        val resolvedSpec = if (colorSpec == MaterialColorSpec.SPEC_2025 && paletteStyle !in SPEC2025_SUPPORTED_STYLES) {
-            MaterialColorSpec.SPEC_2021
-        } else {
-            colorSpec
-        }
-        return resolvedSpec to paletteStyle
-    }
-
-    /** 判断给定调色板风格是否被 Spec2025 支持。 */
-    fun isSpec2025Supported(style: MaterialTonalPaletteStyle): Boolean = style in SPEC2025_SUPPORTED_STYLES
-
-    /**
      * MD3 核心色彩角色（30 个），命名与官方规范逐字对应（见 [specName]）。
      * 四大强调组（primary/secondary/tertiary/error 各 4 个）+ 中性表面组 + 轮廓 + 反色 + 工具色。
      */

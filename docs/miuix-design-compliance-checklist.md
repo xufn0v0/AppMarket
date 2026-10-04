@@ -2,7 +2,7 @@
 
 - 日期：2026-10-05
 - 适用依赖：`top.yukonga.miuix.kmp` 0.9.4-rc01
-- 配色方案：Monet 引擎默认（`Spec2021` + `TonalSpot`）；固定主题色预设已移除，仅保留动态取色开关（关闭时系统默认静态方案，开启时 `keyColor = null` 跟随壁纸或引擎默认种子 `#6750A4`）。调色板风格与颜色规范可在设置中配置；Spec2025 仅支持 TonalSpot/Neutral/Vibrant/Expressive，不兼容组合自动降级为 Spec2021。
+- 配色方案：Monet 引擎默认（`Spec2021` + `TonalSpot`）；固定主题色预设已移除，仅保留动态取色开关（关闭时系统默认静态方案，开启时 `keyColor = null` 跟随壁纸或引擎默认种子 `#6750A4`）
 - 证据约定：所有对比度为真实 `ThemeController` 装配后的实测值（见 [monet-color-scheme-test-report.md](./monet-color-scheme-test-report.md)）；测试代码位于 `domain` / `data` / `app/shared` 的 `desktopTest`。
 
 图例：✅ 符合并通过自动化验证 ｜ ⚠️ 有约束说明（非缺陷）
@@ -18,7 +18,6 @@
 | A0.5 | 角色可用性分类清晰（DIRECT / MIUI_ADAPTED / ENGINE_INTERNAL） | ✅ | `MaterialColorSchemeMapping.availabilityOf` + 测试 `all30CoreRolesHaveDefinedAvailability` / `all19ExtendedRolesHaveDefinedAvailability` |
 | A0.6 | 引擎输出 tone 位次与 Spec2021 TonalSpot 官方表一致 | ✅ | `Md3SpecComplianceTest.engineOutputMatchesSpec2021TonalSpotTonesLight/Dark`，浅 17 角色 / 深 17 角色 tone 误差 ≤ 1.5 |
 | A0.7 | Spec2025（MD3E）同样满足 WCAG AA | ✅ | `Md3SpecComplianceTest.spec2025MeetsWcagAaInBothAppearances` |
-| A0.8 | Spec2025 不兼容风格自动降级为 Spec2021 | ✅ | `MaterialDesignColors.resolveSpecAndStyle` 白名单校验；`ThemeSettingsAppearanceTest.spec2025WithUnsupportedStyleAutoDowngradesToSpec2021InUiState` / `spec2025WithSupportedStyleKeepsSpec2025InUiState` |
 
 ## A. 色彩对比度（WCAG 2.1 AA）
 

@@ -6,9 +6,6 @@ import com.app.market.data.platform.ThemePlatformPreferences
 import com.app.market.data.platform.debugLog
 import com.app.market.domain.model.preference.ThemeMode
 import com.app.market.domain.repository.ThemePreferencesRepository
-import com.app.market.domain.theme.MaterialDesignColors
-import com.app.market.domain.theme.MaterialDesignColors.MaterialColorSpec
-import com.app.market.domain.theme.MaterialDesignColors.MaterialTonalPaletteStyle
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -37,10 +34,6 @@ internal class ThemePreferencesRepositoryImpl(
     override val enableDynamicColor: StateFlow<Boolean> = _enableDynamicColor.asStateFlow()
     private val _themeMode = MutableStateFlow(ThemeMode.SYSTEM)
     override val themeMode: StateFlow<ThemeMode> = _themeMode.asStateFlow()
-    private val _paletteStyle = MutableStateFlow(MaterialDesignColors.DEFAULT_PALETTE_STYLE)
-    override val paletteStyle: StateFlow<MaterialTonalPaletteStyle> = _paletteStyle.asStateFlow()
-    private val _colorSpec = MutableStateFlow(MaterialDesignColors.DEFAULT_SPEC)
-    override val colorSpec: StateFlow<MaterialColorSpec> = _colorSpec.asStateFlow()
     private val _navRailExpanded = MutableStateFlow(ThemePreferenceKeys.NavRailExpanded.default)
     override val navRailExpanded: StateFlow<Boolean> = _navRailExpanded.asStateFlow()
     private val _enablePredictiveBack = MutableStateFlow(false)
@@ -65,17 +58,6 @@ internal class ThemePreferencesRepositoryImpl(
             },
             observe("themeMode", preferences.observe(ThemePreferenceKeys.ThemeMode)) {
                 _themeMode.value = ThemeMode.fromToken(it)
-            },
-            observe("paletteStyle", preferences.observe(ThemePreferenceKeys.PaletteStyle)) { raw ->
-                // 非法 / 未知 specName 安全降级为默认 TonalSpot，绝不向 UI 抛异常
-                _paletteStyle.value = raw
-                    ?.let { name -> MaterialTonalPaletteStyle.entries.firstOrNull { it.specName == name } }
-                    ?: MaterialDesignColors.DEFAULT_PALETTE_STYLE
-            },
-            observe("colorSpec", preferences.observe(ThemePreferenceKeys.ColorSpec)) { raw ->
-                _colorSpec.value = raw
-                    ?.let { name -> MaterialColorSpec.entries.firstOrNull { it.specName == name } }
-                    ?: MaterialDesignColors.DEFAULT_SPEC
             },
             observe("navRailExpanded", preferences.observe(ThemePreferenceKeys.NavRailExpanded)) {
                 _navRailExpanded.value = it
@@ -126,12 +108,6 @@ internal class ThemePreferencesRepositoryImpl(
     override suspend fun setEnableDynamicColor(value: Boolean) = preferences.put(ThemePreferenceKeys.EnableDynamicColor, value)
 
     override suspend fun setThemeMode(value: ThemeMode) = preferences.put(ThemePreferenceKeys.ThemeMode, value.token)
-
-    override suspend fun setPaletteStyle(value: MaterialTonalPaletteStyle) =
-        preferences.put(ThemePreferenceKeys.PaletteStyle, value.specName)
-
-    override suspend fun setColorSpec(value: MaterialColorSpec) =
-        preferences.put(ThemePreferenceKeys.ColorSpec, value.specName)
 
     override suspend fun setNavRailExpanded(value: Boolean) = preferences.put(ThemePreferenceKeys.NavRailExpanded, value)
     override suspend fun setEnablePredictiveBack(value: Boolean) {

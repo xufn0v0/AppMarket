@@ -4,7 +4,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
@@ -23,8 +22,6 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.app.market.domain.model.preference.ThemeMode
-import com.app.market.domain.theme.MaterialDesignColors.MaterialColorSpec
-import com.app.market.domain.theme.MaterialDesignColors.MaterialTonalPaletteStyle
 import com.app.market.platform.isBlurSettingSupported
 import com.app.market.platform.isDynamicColorSupported
 import com.app.market.platform.isPredictiveBackSupported
@@ -34,9 +31,6 @@ import com.app.market.resources.theme_appearance
 import com.app.market.resources.theme_appearance_dark
 import com.app.market.resources.theme_appearance_light
 import com.app.market.resources.theme_appearance_system
-import com.app.market.resources.theme_color_spec
-import com.app.market.resources.theme_color_spec_downgraded
-import com.app.market.resources.theme_color_spec_summary
 import com.app.market.resources.theme_dynamic_color
 import com.app.market.resources.theme_dynamic_color_summary
 import com.app.market.resources.theme_enable_blur
@@ -49,8 +43,6 @@ import com.app.market.resources.theme_navigation_badge
 import com.app.market.resources.theme_navigation_badge_summary
 import com.app.market.resources.theme_page_scale
 import com.app.market.resources.theme_page_scale_summary
-import com.app.market.resources.theme_palette_style
-import com.app.market.resources.theme_palette_style_summary
 import com.app.market.resources.theme_predictive_back
 import com.app.market.resources.theme_predictive_back_summary
 import com.app.market.ui.component.MarketScaffold
@@ -123,39 +115,6 @@ fun ThemeSettingsScreen(
                             checked = state.enableDynamicColor,
                             onCheckedChange = viewModel::setEnableDynamicColor,
                         )
-                        AnimatedVisibility(
-                            visible = state.enableDynamicColor,
-                            enter = expandVertically(),
-                            exit = shrinkVertically(),
-                        ) {
-                            Column {
-                                // 调色板风格：9 种官方风格全部可选
-                                val styleOptions = MaterialTonalPaletteStyle.entries.map { it.specName }
-                                WindowDropdownPreference(
-                                    title = stringResource(Res.string.theme_palette_style),
-                                    items = styleOptions,
-                                    selectedIndex = state.paletteStyle.ordinal,
-                                    onSelectedIndexChange = {
-                                        viewModel.setPaletteStyle(MaterialTonalPaletteStyle.entries[it])
-                                    },
-                                )
-                                // 颜色规范：Spec2021 / Spec2025（MD3 Expressive）
-                                val specOptions = MaterialColorSpec.entries.map { it.specName }
-                                WindowDropdownPreference(
-                                    title = stringResource(Res.string.theme_color_spec),
-                                    summary = if (state.colorSpec != state.effectiveColorSpec) {
-                                        stringResource(Res.string.theme_color_spec_downgraded)
-                                    } else {
-                                        stringResource(Res.string.theme_color_spec_summary)
-                                    },
-                                    items = specOptions,
-                                    selectedIndex = state.colorSpec.ordinal,
-                                    onSelectedIndexChange = {
-                                        viewModel.setColorSpec(MaterialColorSpec.entries[it])
-                                    },
-                                )
-                            }
-                        }
                     }
                 }
             }
