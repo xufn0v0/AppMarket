@@ -89,11 +89,8 @@
     <string name="theme_dynamic_color_summary">从壁纸提取颜色（Material You）</string>
     <string name="theme_appearance">外观</string>
     <string name="theme_appearance_system">跟随系统</string>
-    <string name="theme_appearance_system_summary">根据系统主题自动调整</string>
     <string name="theme_appearance_light">浅色</string>
-    <string name="theme_appearance_light_summary">始终使用浅色主题</string>
     <string name="theme_appearance_dark">深色</string>
-    <string name="theme_appearance_dark_summary">始终使用深色主题</string>
     <string name="theme_seed_color">主题色</string>
     <string name="theme_seed_follow_wallpaper">跟随壁纸</string>
     <string name="theme_predictive_back">预测性返回</string>

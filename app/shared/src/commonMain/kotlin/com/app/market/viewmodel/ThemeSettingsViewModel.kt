@@ -21,7 +21,6 @@ data class ThemeSettingsUiState(
     val enableDynamicColor: Boolean = false,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val monetSeedColor: Int? = null,
-    val showSeedColorPicker: Boolean = false,
     val showScaleDialog: Boolean = false,
     val enablePredictiveBack: Boolean = false,
     val pageScale: Float = 1f,
@@ -48,33 +47,27 @@ class ThemeSettingsViewModel(
         AppearancePreferences(blur, floating, dynamicColor, themeMode, seedColor)
     }
 
-    private val showSeedColorPicker = MutableStateFlow(false)
     private val showScaleDialog = MutableStateFlow(false)
 
     val uiState: StateFlow<ThemeSettingsUiState> = combine(
         combine(
-            combine(
-                appearance,
-                preferences.enableFloatingBottomBarBlur,
-                preferences.enableNavigationBadge,
-                preferences.enablePredictiveBack,
-                preferences.pageScale,
-            ) { appearance, glass, badge, predictiveBack, scale ->
-                ThemeSettingsUiState(
-                    enableBlur = appearance.enableBlur,
-                    enableFloatingBottomBar = appearance.enableFloatingBottomBar,
-                    enableDynamicColor = appearance.enableDynamicColor,
-                    themeMode = appearance.themeMode,
-                    monetSeedColor = appearance.monetSeedColor,
-                    enableFloatingBottomBarBlur = glass,
-                    enableNavigationBadge = badge,
-                    enablePredictiveBack = predictiveBack,
-                    pageScale = scale,
-                )
-            },
-            showSeedColorPicker,
-        ) { state, showPicker ->
-            state.copy(showSeedColorPicker = showPicker)
+            appearance,
+            preferences.enableFloatingBottomBarBlur,
+            preferences.enableNavigationBadge,
+            preferences.enablePredictiveBack,
+            preferences.pageScale,
+        ) { appearance, glass, badge, predictiveBack, scale ->
+            ThemeSettingsUiState(
+                enableBlur = appearance.enableBlur,
+                enableFloatingBottomBar = appearance.enableFloatingBottomBar,
+                enableDynamicColor = appearance.enableDynamicColor,
+                themeMode = appearance.themeMode,
+                monetSeedColor = appearance.monetSeedColor,
+                enableFloatingBottomBarBlur = glass,
+                enableNavigationBadge = badge,
+                enablePredictiveBack = predictiveBack,
+                pageScale = scale,
+            )
         },
         showScaleDialog,
     ) { state, showScale ->
@@ -87,18 +80,7 @@ class ThemeSettingsViewModel(
     fun setEnableNavigationBadge(value: Boolean) = persist { preferences.setEnableNavigationBadge(value) }
     fun setEnableDynamicColor(value: Boolean) = persist { preferences.setEnableDynamicColor(value) }
     fun setThemeMode(value: ThemeMode) = persist { preferences.setThemeMode(value) }
-    fun setMonetSeedColor(value: Int?) = persist {
-        preferences.setMonetSeedColor(value)
-        showSeedColorPicker.value = false
-    }
-
-    fun showSeedColorPicker() {
-        showSeedColorPicker.value = true
-    }
-
-    fun dismissSeedColorPicker() {
-        showSeedColorPicker.value = false
-    }
+    fun setMonetSeedColor(value: Int?) = persist { preferences.setMonetSeedColor(value) }
 
     fun showScaleDialog() {
         showScaleDialog.value = true
