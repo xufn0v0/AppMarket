@@ -16,6 +16,7 @@ data class ThemeSettingsUiState(
     val enableFloatingBottomBar: Boolean = false,
     val enableFloatingBottomBarBlur: Boolean = false,
     val enableNavigationBadge: Boolean = true,
+    val enableDynamicColor: Boolean = false,
     val enablePredictiveBack: Boolean = false,
     val pageScale: Float = 1f,
 )
@@ -23,8 +24,12 @@ data class ThemeSettingsUiState(
 class ThemeSettingsViewModel(
     private val preferences: ThemePreferencesRepository,
 ) : ViewModel() {
-    private val appearance = combine(preferences.enableBlur, preferences.enableFloatingBottomBar) { blur, floating ->
-        blur to floating
+    private val appearance = combine(
+        preferences.enableBlur,
+        preferences.enableFloatingBottomBar,
+        preferences.enableDynamicColor,
+    ) { blur, floating, dynamicColor ->
+        Triple(blur, floating, dynamicColor)
     }
 
     val uiState: StateFlow<ThemeSettingsUiState> = combine(
@@ -37,6 +42,7 @@ class ThemeSettingsViewModel(
         ThemeSettingsUiState(
             enableBlur = appearance.first,
             enableFloatingBottomBar = appearance.second,
+            enableDynamicColor = appearance.third,
             enableFloatingBottomBarBlur = glass,
             enableNavigationBadge = badge,
             enablePredictiveBack = predictiveBack,
@@ -48,6 +54,7 @@ class ThemeSettingsViewModel(
     fun setEnableFloatingBottomBar(value: Boolean) = persist { preferences.setEnableFloatingBottomBar(value) }
     fun setEnableFloatingBottomBarBlur(value: Boolean) = persist { preferences.setEnableFloatingBottomBarBlur(value) }
     fun setEnableNavigationBadge(value: Boolean) = persist { preferences.setEnableNavigationBadge(value) }
+    fun setEnableDynamicColor(value: Boolean) = persist { preferences.setEnableDynamicColor(value) }
     fun setEnablePredictiveBack(value: Boolean) = persist { preferences.setEnablePredictiveBack(value) }
     fun setPageScale(value: Float) = persist { preferences.setPageScale(value) }
 

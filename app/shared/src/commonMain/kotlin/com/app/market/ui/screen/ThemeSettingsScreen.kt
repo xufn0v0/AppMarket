@@ -22,9 +22,12 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.app.market.platform.isBlurSettingSupported
+import com.app.market.platform.isDynamicColorSupported
 import com.app.market.platform.isPredictiveBackSupported
 import com.app.market.resources.Res
 import com.app.market.resources.theme
+import com.app.market.resources.theme_dynamic_color
+import com.app.market.resources.theme_dynamic_color_summary
 import com.app.market.resources.theme_enable_blur
 import com.app.market.resources.theme_enable_blur_summary
 import com.app.market.resources.theme_enable_glass
@@ -63,12 +66,14 @@ fun ThemeSettingsScreen(
     ThemeSettingsContent(
         state = state,
         onBack = onBack,
+        onEnableDynamicColor = viewModel::setEnableDynamicColor,
         onEnableBlur = viewModel::setEnableBlur,
         onEnableFloatingBottomBar = viewModel::setEnableFloatingBottomBar,
         onEnableFloatingBottomBarBlur = viewModel::setEnableFloatingBottomBarBlur,
         onEnableNavigationBadge = viewModel::setEnableNavigationBadge,
         onEnablePredictiveBack = viewModel::setEnablePredictiveBack,
         onPageScale = viewModel::setPageScale,
+        dynamicColorSupported = isDynamicColorSupported(),
         blurSupported = isBlurSettingSupported(),
         predictiveBackSupported = isPredictiveBackSupported(),
         modifier = modifier,
@@ -79,12 +84,14 @@ fun ThemeSettingsScreen(
 private fun ThemeSettingsContent(
     state: ThemeSettingsUiState,
     onBack: () -> Unit,
+    onEnableDynamicColor: (Boolean) -> Unit,
     onEnableBlur: (Boolean) -> Unit,
     onEnableFloatingBottomBar: (Boolean) -> Unit,
     onEnableFloatingBottomBarBlur: (Boolean) -> Unit,
     onEnableNavigationBadge: (Boolean) -> Unit,
     onEnablePredictiveBack: (Boolean) -> Unit,
     onPageScale: (Float) -> Unit,
+    dynamicColorSupported: Boolean,
     blurSupported: Boolean,
     predictiveBackSupported: Boolean,
     modifier: Modifier = Modifier,
@@ -112,10 +119,26 @@ private fun ThemeSettingsContent(
                 bottom = innerPadding.calculateBottomPadding() + PageVerticalPadding,
             ),
         ) {
+            if (dynamicColorSupported) {
+                item(key = "dynamic-color") {
+                    CardSegmentContainer(
+                        isFirst = true,
+                        isLast = false,
+                        horizontalPadding = 0.dp,
+                    ) {
+                        SwitchPreference(
+                            title = stringResource(Res.string.theme_dynamic_color),
+                            summary = stringResource(Res.string.theme_dynamic_color_summary),
+                            checked = state.enableDynamicColor,
+                            onCheckedChange = onEnableDynamicColor,
+                        )
+                    }
+                }
+            }
             if (blurSupported) {
                 item(key = "blur") {
                     CardSegmentContainer(
-                        isFirst = true,
+                        isFirst = !dynamicColorSupported,
                         isLast = false,
                         horizontalPadding = 0.dp,
                     ) {
@@ -130,7 +153,7 @@ private fun ThemeSettingsContent(
             }
             item(key = "floating-bottom-bar") {
                 CardSegmentContainer(
-                    isFirst = !blurSupported,
+                    isFirst = !dynamicColorSupported && !blurSupported,
                     isLast = false,
                     horizontalPadding = 0.dp,
                 ) {

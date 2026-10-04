@@ -84,6 +84,8 @@
     <string name="theme_enable_glass_summary">Apply a translucent glass effect to the floating bottom bar</string>
     <string name="theme_navigation_badge">Navigation badge</string>
     <string name="theme_navigation_badge_summary">Show the number of apps that can be updated</string>
+    <string name="theme_dynamic_color">Dynamic color</string>
+    <string name="theme_dynamic_color_summary">Extract colors from your wallpaper (Material You)</string>
     <string name="theme_predictive_back">Predictive back</string>
     <string name="theme_predictive_back_summary">Enable predictive back gestures</string>
     <string name="theme_page_scale">Interface scale</string>

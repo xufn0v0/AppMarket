@@ -29,6 +29,8 @@ internal class ThemePreferencesRepositoryImpl(
     override val enableFloatingBottomBarBlur: StateFlow<Boolean> = _enableFloatingBottomBarBlur.asStateFlow()
     private val _enableNavigationBadge = MutableStateFlow(ThemePreferenceKeys.EnableNavigationBadge.default)
     override val enableNavigationBadge: StateFlow<Boolean> = _enableNavigationBadge.asStateFlow()
+    private val _enableDynamicColor = MutableStateFlow(ThemePreferenceKeys.EnableDynamicColor.default)
+    override val enableDynamicColor: StateFlow<Boolean> = _enableDynamicColor.asStateFlow()
     private val _navRailExpanded = MutableStateFlow(ThemePreferenceKeys.NavRailExpanded.default)
     override val navRailExpanded: StateFlow<Boolean> = _navRailExpanded.asStateFlow()
     private val _enablePredictiveBack = MutableStateFlow(false)
@@ -47,6 +49,9 @@ internal class ThemePreferencesRepositoryImpl(
             },
             observe("enableNavigationBadge", preferences.observe(ThemePreferenceKeys.EnableNavigationBadge)) {
                 _enableNavigationBadge.value = it
+            },
+            observe("enableDynamicColor", preferences.observe(ThemePreferenceKeys.EnableDynamicColor)) {
+                _enableDynamicColor.value = it
             },
             observe("navRailExpanded", preferences.observe(ThemePreferenceKeys.NavRailExpanded)) {
                 _navRailExpanded.value = it
@@ -94,6 +99,7 @@ internal class ThemePreferencesRepositoryImpl(
         preferences.put(ThemePreferenceKeys.EnableFloatingBottomBarBlur, value)
 
     override suspend fun setEnableNavigationBadge(value: Boolean) = preferences.put(ThemePreferenceKeys.EnableNavigationBadge, value)
+    override suspend fun setEnableDynamicColor(value: Boolean) = preferences.put(ThemePreferenceKeys.EnableDynamicColor, value)
     override suspend fun setNavRailExpanded(value: Boolean) = preferences.put(ThemePreferenceKeys.NavRailExpanded, value)
     override suspend fun setEnablePredictiveBack(value: Boolean) {
         platformPreferences.setPredictiveBackEnabled(value)

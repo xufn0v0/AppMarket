@@ -77,6 +77,7 @@ fun App(
     val enableFloatingBottomBar by themePrefs.enableFloatingBottomBar.collectAsStateWithLifecycle()
     val enableFloatingBottomBarBlur by themePrefs.enableFloatingBottomBarBlur.collectAsStateWithLifecycle()
     val enableNavigationBadge by themePrefs.enableNavigationBadge.collectAsStateWithLifecycle()
+    val enableDynamicColor by themePrefs.enableDynamicColor.collectAsStateWithLifecycle()
     val enablePredictiveBack by themePrefs.enablePredictiveBack.collectAsStateWithLifecycle()
     val pageScale by themePrefs.pageScale.collectAsStateWithLifecycle()
     val stripAppNameSubtitle by updatePrefs.stripAppNameSubtitle.collectAsStateWithLifecycle()
@@ -99,8 +100,10 @@ fun App(
         }
     }
     LaunchedEffect(Unit) { runCatching { profileStore.syncFromServerIfDue() } }
-    val controller = remember { ThemeController(ColorSchemeMode.System) }
     ApplyPredictiveBackPreference(enablePredictiveBack)
+    val controller = remember(enableDynamicColor) {
+        ThemeController(colorSchemeModeFor(enableDynamicColor))
+    }
     MiuixTheme(controller = controller) {
         val systemDensity = LocalDensity.current
         val scaledDensity = remember(systemDensity, pageScale) {
@@ -211,3 +214,11 @@ private fun UnknownSourcesPermissionDialog(
         }
     }
 }
+
+/**
+ * Maps the persisted dynamic-color preference to the Miuix [ColorSchemeMode].
+ * Monet modes follow the system light/dark setting; on platforms where wallpaper colors
+ * are unavailable the Miuix library degrades to a static baseline palette.
+ */
+internal fun colorSchemeModeFor(dynamicColor: Boolean): ColorSchemeMode =
+    if (dynamicColor) ColorSchemeMode.MonetSystem else ColorSchemeMode.System

@@ -85,6 +85,8 @@
     <string name="theme_enable_glass_summary">为悬浮底栏应用半透明玻璃效果</string>
     <string name="theme_navigation_badge">导航栏角标</string>
     <string name="theme_navigation_badge_summary">显示可更新应用数量</string>
+    <string name="theme_dynamic_color">动态取色</string>
+    <string name="theme_dynamic_color_summary">从壁纸提取颜色（Material You）</string>
     <string name="theme_predictive_back">预测性返回</string>
     <string name="theme_predictive_back_summary">启用预测性返回手势</string>
     <string name="theme_page_scale">界面缩放</string>

@@ -65,6 +65,8 @@ kotlin {
         getByName("desktopTest").dependencies {
             implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)
+            implementation("org.jetbrains.compose.ui:ui-test-junit4")
+            implementation(compose.desktop.currentOs)
         }
 
     }
