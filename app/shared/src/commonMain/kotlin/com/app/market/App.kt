@@ -85,6 +85,8 @@ fun App(
     val enableNavigationBadge by themePrefs.enableNavigationBadge.collectAsStateWithLifecycle()
     val enableDynamicColor by themePrefs.enableDynamicColor.collectAsStateWithLifecycle()
     val themeMode by themePrefs.themeMode.collectAsStateWithLifecycle()
+    val paletteStyle by themePrefs.paletteStyle.collectAsStateWithLifecycle()
+    val colorSpec by themePrefs.colorSpec.collectAsStateWithLifecycle()
     val enablePredictiveBack by themePrefs.enablePredictiveBack.collectAsStateWithLifecycle()
     val pageScale by themePrefs.pageScale.collectAsStateWithLifecycle()
     val stripAppNameSubtitle by updatePrefs.stripAppNameSubtitle.collectAsStateWithLifecycle()
@@ -109,14 +111,16 @@ fun App(
     LaunchedEffect(Unit) { runCatching { profileStore.syncFromServerIfDue() } }
     ApplyPredictiveBackPreference(enablePredictiveBack)
     // 动态取色开启时 keyColor = null：跟随壁纸（Android）或引擎默认种子（桌面）；
-    // 关闭时走系统默认静态方案，不叠加任何预设主题色
-    val controller = remember(themeMode, enableDynamicColor) {
+    // 关闭时走系统默认静态方案，不叠加任何预设主题色。
+    // 调色板风格与颜色规范可配置；Spec2025 仅支持 TonalSpot/Neutral/Vibrant/Expressive，
+    // 其余组合按官方规范自动降级为 Spec2021（resolveSpecAndStyle 纯函数保证）。
+    val (effectiveSpec, effectiveStyle) = MaterialDesignColors.resolveSpecAndStyle(colorSpec, paletteStyle)
+    val controller = remember(themeMode, enableDynamicColor, effectiveSpec, effectiveStyle) {
         ThemeController(
             colorSchemeMode = colorSchemeModeFor(themeMode, enableDynamicColor),
             keyColor = null,
-            // 显式固定 MD3 默认算法参数（Spec2021 + TonalSpot），防止库版本升级带来的配色漂移
-            colorSpec = MaterialDesignColors.DEFAULT_SPEC.toMiuixThemeColorSpec(),
-            paletteStyle = MaterialDesignColors.DEFAULT_PALETTE_STYLE.toMiuixPaletteStyle(),
+            colorSpec = effectiveSpec.toMiuixThemeColorSpec(),
+            paletteStyle = effectiveStyle.toMiuixPaletteStyle(),
         )
     }
     MiuixTheme(colors = rememberAnimatedMiuixColors(controller.currentColors())) {

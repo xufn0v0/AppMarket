@@ -87,6 +87,11 @@
     <string name="theme_navigation_badge_summary">显示可更新应用数量</string>
     <string name="theme_dynamic_color">动态取色</string>
     <string name="theme_dynamic_color_summary">从壁纸提取颜色（Material You）</string>
+    <string name="theme_palette_style">调色板风格</string>
+    <string name="theme_palette_style_summary">动态取色引擎使用的调色板风格</string>
+    <string name="theme_color_spec">颜色规范</string>
+    <string name="theme_color_spec_summary">颜色规范版本（MD3 / MD3 Expressive）</string>
+    <string name="theme_color_spec_downgraded">已自动降级为 Spec2021（该风格不受 Spec2025 支持）</string>
     <string name="theme_appearance">外观</string>
     <string name="theme_appearance_system">跟随系统</string>
     <string name="theme_appearance_light">浅色</string>

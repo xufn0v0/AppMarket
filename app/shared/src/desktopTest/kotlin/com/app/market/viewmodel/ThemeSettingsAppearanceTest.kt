@@ -3,6 +3,9 @@ package com.app.market.viewmodel
 import com.app.market.colorSchemeModeFor
 import com.app.market.domain.model.preference.ThemeMode
 import com.app.market.domain.repository.ThemePreferencesRepository
+import com.app.market.domain.theme.MaterialDesignColors
+import com.app.market.domain.theme.MaterialDesignColors.MaterialColorSpec
+import com.app.market.domain.theme.MaterialDesignColors.MaterialTonalPaletteStyle
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -96,6 +99,84 @@ class ThemeSettingsAppearanceTest {
     }
 
     @Test
+    fun spec2025WithUnsupportedStyleAutoDowngradesToSpec2021InUiState() = runTest {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        try {
+            val preferences = FakeThemePreferences(
+                dynamicColor = true,
+                paletteStyle = MaterialTonalPaletteStyle.RAINBOW,
+                colorSpec = MaterialColorSpec.SPEC_2025,
+            )
+            val viewModel = ThemeSettingsViewModel(preferences)
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertEquals(MaterialColorSpec.SPEC_2025, state.colorSpec)
+            // Spec2025 不支持 Rainbow，自动降级为 Spec2021
+            assertEquals(MaterialColorSpec.SPEC_2021, state.effectiveColorSpec)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun spec2025WithSupportedStyleKeepsSpec2025InUiState() = runTest {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        try {
+            val preferences = FakeThemePreferences(
+                dynamicColor = true,
+                paletteStyle = MaterialTonalPaletteStyle.VIBRANT,
+                colorSpec = MaterialColorSpec.SPEC_2025,
+            )
+            val viewModel = ThemeSettingsViewModel(preferences)
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertEquals(MaterialColorSpec.SPEC_2025, state.colorSpec)
+            assertEquals(MaterialColorSpec.SPEC_2025, state.effectiveColorSpec)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun setPaletteStylePersistsAndUpdatesState() = runTest {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        try {
+            val preferences = FakeThemePreferences()
+            val viewModel = ThemeSettingsViewModel(preferences)
+            advanceUntilIdle()
+            assertEquals(MaterialTonalPaletteStyle.TONAL_SPOT, viewModel.uiState.value.paletteStyle)
+
+            viewModel.setPaletteStyle(MaterialTonalPaletteStyle.EXPRESSIVE)
+            advanceUntilIdle()
+
+            assertEquals(MaterialTonalPaletteStyle.EXPRESSIVE, viewModel.uiState.value.paletteStyle)
+            assertEquals(listOf(MaterialTonalPaletteStyle.EXPRESSIVE), preferences.paletteStyleWrites)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun setColorSpecPersistsAndUpdatesState() = runTest {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        try {
+            val preferences = FakeThemePreferences()
+            val viewModel = ThemeSettingsViewModel(preferences)
+            advanceUntilIdle()
+
+            viewModel.setColorSpec(MaterialColorSpec.SPEC_2025)
+            advanceUntilIdle()
+
+            assertEquals(MaterialColorSpec.SPEC_2025, viewModel.uiState.value.colorSpec)
+            assertEquals(listOf(MaterialColorSpec.SPEC_2025), preferences.colorSpecWrites)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
     fun setEnableDynamicColorPersistsAndUpdatesState() = runTest {
         Dispatchers.setMain(StandardTestDispatcher(testScheduler))
         try {
@@ -117,6 +198,8 @@ class ThemeSettingsAppearanceTest {
 private class FakeThemePreferences(
     dynamicColor: Boolean = false,
     themeMode: ThemeMode = ThemeMode.SYSTEM,
+    paletteStyle: MaterialTonalPaletteStyle = MaterialDesignColors.DEFAULT_PALETTE_STYLE,
+    colorSpec: MaterialColorSpec = MaterialDesignColors.DEFAULT_SPEC,
 ) : ThemePreferencesRepository {
     override val initialized: StateFlow<Boolean> = MutableStateFlow(true)
     override val enableBlur = MutableStateFlow(false)
@@ -125,12 +208,16 @@ private class FakeThemePreferences(
     override val enableNavigationBadge = MutableStateFlow(true)
     override val enableDynamicColor = MutableStateFlow(dynamicColor)
     override val themeMode = MutableStateFlow(themeMode)
+    override val paletteStyle = MutableStateFlow(paletteStyle)
+    override val colorSpec = MutableStateFlow(colorSpec)
     override val navRailExpanded = MutableStateFlow(false)
     override val enablePredictiveBack = MutableStateFlow(false)
     override val pageScale = MutableStateFlow(1f)
 
     val dynamicColorWrites = mutableListOf<Boolean>()
     val themeModeWrites = mutableListOf<ThemeMode>()
+    val paletteStyleWrites = mutableListOf<MaterialTonalPaletteStyle>()
+    val colorSpecWrites = mutableListOf<MaterialColorSpec>()
 
     override suspend fun setEnableBlur(value: Boolean) = Unit
     override suspend fun setEnableFloatingBottomBar(value: Boolean) = Unit
@@ -145,6 +232,16 @@ private class FakeThemePreferences(
     override suspend fun setThemeMode(value: ThemeMode) {
         themeModeWrites += value
         themeMode.value = value
+    }
+
+    override suspend fun setPaletteStyle(value: MaterialTonalPaletteStyle) {
+        paletteStyleWrites += value
+        paletteStyle.value = value
+    }
+
+    override suspend fun setColorSpec(value: MaterialColorSpec) {
+        colorSpecWrites += value
+        colorSpec.value = value
     }
 
     override suspend fun setNavRailExpanded(value: Boolean) = Unit
