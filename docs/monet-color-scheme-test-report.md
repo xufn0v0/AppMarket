@@ -1,9 +1,10 @@
-# Monet 引擎默认配色方案 — 测试报告
+# Material Design 3 主题色系统 — 测试报告
 
 - 日期：2026-10-05
 - 被测版本：`top.yukonga.miuix.kmp` 0.9.4-rc01
-- 引擎参数（全端锁定）：种子 `#6750A4`、`ThemeColorSpec.Spec2021`、`ThemePaletteStyle.TonalSpot`
+- 引擎参数（全端锁定）：种子 `#6750A4`、颜色规范 `Spec2021`（MD3）、调色板风格 `TonalSpot`
 - 测试平台：JVM Desktop（`desktopTest`，走与生产环境完全相同的公开装配路径 `ThemeController`）
+- 官方命名映射：`MaterialDesignColors`（30 核心角色 + 19 扩展角色）→ `MaterialColorSchemeMapping` → Miuix `ThemeController`
 
 ## 1. 测试目标
 
@@ -14,6 +15,24 @@
 5. 验证持久化种子色的异常容错（损坏值降级、透明值归一化）。
 
 ## 2. 方案替换与映射关系
+
+### 2.1 MD3/MD3E 官方命名体系
+
+| 层 | 类 / 文件 | 说明 |
+|---|---|---|
+| 领域层 | `MaterialDesignColors` | 30 个 MD3 核心角色 + 19 个 MD3E 扩展角色枚举，每个枚举携带 `specName`（如 `"primary"`、`"surfaceContainerHigh"`）与官方规范逐字对应 |
+| 领域层 | `MaterialDesignColors.MaterialColorSpec` | 规范版本枚举：`Spec2021`（MD3）/ `Spec2025`（MD3E） |
+| 领域层 | `MaterialDesignColors.MaterialTonalPaletteStyle` | 9 种官方调色板风格（TonalSpot、Vibrant、Expressive、Neutral、Rainbow、FruitSalad、Monochrome、Fidelity、Content） |
+| 桥接层 | `MaterialColorSchemeMapping` | 官方命名 → Miuix 库枚举；角色可用性分类（DIRECT / MIUI_ADAPTED / ENGINE_INTERNAL） |
+| 装配层 | `App.kt` | 通过 `MaterialDesignColors.DEFAULT_SPEC.toMiuixThemeColorSpec()` 等桥接函数装配，代码中不出现库枚举字面量 |
+
+### 2.2 基线精确色值（MD3 / MD3E 官方规范）
+
+- `MaterialDesignColors.coreBaseline(role, dark)`：30 个核心角色浅/深精确色值（如浅色 primary `#6750A4`、深色 surface `#1C1B1F`）；
+- `MaterialDesignColors.extendedBaseline(role, dark)`：19 个 MD3E 扩展角色精确色值（fixed 固定色 12 个跨模式一致；表面层级 7 个浅深各异）；
+- 测试守护：`MaterialDesignColorsTest` 15 个用例逐字断言枚举名称、基线色值、tone 位次、AA 合规。
+
+### 2.3 方案替换对照
 
 | 项 | 替换前 | 替换后 |
 |---|---|---|
@@ -135,12 +154,14 @@
 ./gradlew.bat :domain:desktopTest :data:desktopTest :app:shared:desktopTest
 ```
 
-结果：**194 个测试，0 失败，0 错误，BUILD SUCCESSFUL**。
+结果：**268 个测试，0 失败，0 错误，BUILD SUCCESSFUL**。
 
 与本次改造直接相关的测试：
 
 | 测试类 | 用例数 | 覆盖点 |
 |---|---|---|
+| `MaterialDesignColorsTest`（domain） | 15 | 官方命名逐字断言（核心 30 / 扩展 19 / 调色板风格 9）、基线精确色值、fixed 跨模式一致、tone 位次、基线 AA |
+| `Md3SpecComplianceTest`（app/shared） | 6 | 30+19 角色映射可用性、引擎输出 vs Spec2021 TonalSpot 官方 tone 表（误差 ≤1.5）、Spec2025 AA 合规、默认种子与基线 primary tone 一致 |
 | `MonetColorDefaultsTest`（domain） | 13 | 默认种子常量、色板角色完整/不重复/不透明、种子编解码 round-trip、损坏值降级、透明值归一化、WCAG 对比度公式（黑/白=21）等 |
 | `MonetDefaultPaletteTest`（app/shared） | 5 | 显式默认种子 == 引擎回退；生成确定性；5 设备画像一致 + AA + 不透明；3 种子 × 浅/深 AA；实测色值 dump |
 | `DynamicColorThemeUiTest`（app/shared） | 6 | 动态取色开关、浅深切换、自定义种子覆盖基线、3 个默认方案种子在 UI 装配链路下的 AA |
@@ -150,6 +171,7 @@
 ## 7. 结论
 
 1. 种子色方案已全面替换为 Monet 引擎默认配色（`#6750A4` / Spec2021 / TonalSpot），原有动态取色等功能与持久化语义完整保留；
-2. 3 个可选默认方案角色种子在浅、深色下全部关键正文/容器角色对对比度区间为 **6.46~16.37（浅）/ 7.20~14.42（深）**，均显著高于 WCAG 2.1 AA 的 4.5:1 阈值；
-3. 配色生成在 5 种设备画像下 29 个角色逐值一致，算法确定性与设备无关性有测试守护；
-4. 损坏/透明/越界种子值均有异常处理与测试覆盖，不会引发配色异常或崩溃。
+2. 色彩系统命名、基线色值、色调位次均与 MD3 / MD3E 官方规范逐字/逐值对齐，并经 `MaterialDesignColorsTest`、`Md3SpecComplianceTest` 自动化守护；
+3. 3 个可选默认方案角色种子在浅、深色下全部关键正文/容器角色对对比度区间为 **6.46~16.37（浅）/ 7.20~14.42（深）**，均显著高于 WCAG 2.1 AA 的 4.5:1 阈值；
+4. 配色生成在 5 种设备画像下 29 个角色逐值一致，算法确定性与设备无关性有测试守护；
+5. 损坏/透明/越界种子值均有异常处理与测试覆盖，不会引发配色异常或崩溃。

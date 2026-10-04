@@ -89,6 +89,19 @@ object MonetColorDefaults {
         return 0.2126 * r + 0.7152 * g + 0.0722 * b
     }
 
+    /**
+     * HCT 色彩空间的色调位次（tone），即 CIELAB L*（0=纯黑，100=纯白）。
+     * MD3 规范用 tone 精确定义动态方案中每个角色的明度位次（如浅色 primary = tone 40）。
+     */
+    fun hctTone(argb: Int): Double {
+        val y = relativeLuminance(argb)
+        return if (y <= 216.0 / 24389.0) {
+            y * (24389.0 / 27.0)
+        } else {
+            116.0 * y.pow(1.0 / 3.0) - 16.0
+        }
+    }
+
     /** 两个不透明颜色间的 WCAG 对比度，取值 1.0（相同）~ 21.0（黑 / 白）。 */
     fun contrastRatio(argb1: Int, argb2: Int): Float {
         val lighter = max(relativeLuminance(argb1), relativeLuminance(argb2))

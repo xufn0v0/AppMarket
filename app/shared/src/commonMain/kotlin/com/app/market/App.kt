@@ -30,6 +30,7 @@ import com.app.market.domain.repository.InstallerPreferencesRepository
 import com.app.market.domain.repository.ProfileRepository
 import com.app.market.domain.repository.ThemePreferencesRepository
 import com.app.market.domain.repository.UpdatePreferencesRepository
+import com.app.market.domain.theme.MaterialDesignColors
 import com.app.market.domain.theme.MonetColorDefaults
 import com.app.market.platform.ApplyPredictiveBackPreference
 import com.app.market.platform.UiPlatform
@@ -59,9 +60,9 @@ import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.theme.ColorSchemeMode
 import top.yukonga.miuix.kmp.theme.LocalContentColor
 import top.yukonga.miuix.kmp.theme.MiuixTheme
-import top.yukonga.miuix.kmp.theme.ThemeColorSpec
+import com.app.market.ui.theme.toMiuixPaletteStyle
+import com.app.market.ui.theme.toMiuixThemeColorSpec
 import top.yukonga.miuix.kmp.theme.ThemeController
-import top.yukonga.miuix.kmp.theme.ThemePaletteStyle
 import top.yukonga.miuix.kmp.window.WindowDialog
 
 @Composable
@@ -113,9 +114,9 @@ fun App(
         ThemeController(
             colorSchemeMode = colorSchemeModeFor(themeMode, enableDynamicColor),
             keyColor = MonetColorDefaults.normalizeSeed(monetSeedColor)?.let(::Color),
-            // 显式固定 Monet 引擎默认算法参数，防止库版本升级带来的默认配色漂移
-            colorSpec = ThemeColorSpec.Spec2021,
-            paletteStyle = ThemePaletteStyle.TonalSpot,
+            // 显式固定 MD3 默认算法参数（Spec2021 + TonalSpot），防止库版本升级带来的配色漂移
+            colorSpec = MaterialDesignColors.DEFAULT_SPEC.toMiuixThemeColorSpec(),
+            paletteStyle = MaterialDesignColors.DEFAULT_PALETTE_STYLE.toMiuixPaletteStyle(),
         )
     }
     MiuixTheme(colors = rememberAnimatedMiuixColors(controller.currentColors())) {

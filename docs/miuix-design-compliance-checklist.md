@@ -7,6 +7,18 @@
 
 图例：✅ 符合并通过自动化验证 ｜ ⚠️ 有约束说明（非缺陷）
 
+## A0. MD3/MD3E 官方命名与角色映射
+
+| # | 要求 | 结果 | 证据 |
+|---|---|---|---|
+| A0.1 | 核心角色命名与 MD3 规范逐字一致 | ✅ | `MaterialDesignColors.Md3ColorRole` 30 个枚举携带 `specName`，测试 `md3ColorRoleSpecNamesMatchOfficialTerminology` 逐字断言 |
+| A0.2 | 扩展角色命名与 MD3E 规范逐字一致 | ✅ | `MaterialDesignColors.Md3ExtendedColorRole` 19 个枚举（fixed 12 + 表面层级 7），测试 `md3ExtendedColorRoleSpecNamesMatchOfficialTerminology` 逐字断言 |
+| A0.3 | 调色板风格命名与官方一致（含 TonalSpot） | ✅ | `MaterialDesignColors.MaterialTonalPaletteStyle` 9 种风格枚举，测试 `paletteStyleSpecNamesMatchOfficialTerminology` 逐字断言 |
+| A0.4 | 基线精确色值完整且符合规范 | ✅ | `MaterialDesignColors.coreBaseline` / `extendedBaseline` 浅深双模式 49 个角色精确色值，测试 `coreLightBaselineContainsAll30Roles` 等 |
+| A0.5 | 角色可用性分类清晰（DIRECT / MIUI_ADAPTED / ENGINE_INTERNAL） | ✅ | `MaterialColorSchemeMapping.availabilityOf` + 测试 `all30CoreRolesHaveDefinedAvailability` / `all19ExtendedRolesHaveDefinedAvailability` |
+| A0.6 | 引擎输出 tone 位次与 Spec2021 TonalSpot 官方表一致 | ✅ | `Md3SpecComplianceTest.engineOutputMatchesSpec2021TonalSpotTonesLight/Dark`，浅 17 角色 / 深 17 角色 tone 误差 ≤ 1.5 |
+| A0.7 | Spec2025（MD3E）同样满足 WCAG AA | ✅ | `Md3SpecComplianceTest.spec2025MeetsWcagAaInBothAppearances` |
+
 ## A. 色彩对比度（WCAG 2.1 AA）
 
 | # | 要求 | 结果 | 证据 |

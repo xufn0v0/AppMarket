@@ -5,15 +5,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import com.app.market.domain.theme.MaterialDesignColors
 import com.app.market.domain.theme.MonetColorDefaults
+import com.app.market.ui.theme.toMiuixPaletteStyle
+import com.app.market.ui.theme.toMiuixThemeColorSpec
 import org.junit.Rule
 import org.junit.Test
 import top.yukonga.miuix.kmp.theme.ColorSchemeMode
 import top.yukonga.miuix.kmp.theme.Colors
 import top.yukonga.miuix.kmp.theme.MiuixTheme
-import top.yukonga.miuix.kmp.theme.ThemeColorSpec
 import top.yukonga.miuix.kmp.theme.ThemeController
-import top.yukonga.miuix.kmp.theme.ThemePaletteStyle
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -56,8 +57,8 @@ class MonetDefaultPaletteTest {
                 ThemeController(
                     colorSchemeMode = if (dark) ColorSchemeMode.MonetDark else ColorSchemeMode.MonetLight,
                     keyColor = seedArgb?.let { Color(it) },
-                    colorSpec = ThemeColorSpec.Spec2021,
-                    paletteStyle = ThemePaletteStyle.TonalSpot,
+                    colorSpec = MaterialDesignColors.DEFAULT_SPEC.toMiuixThemeColorSpec(),
+                    paletteStyle = MaterialDesignColors.DEFAULT_PALETTE_STYLE.toMiuixPaletteStyle(),
                 )
             }
             MiuixTheme(colors = controller.currentColors()) {
