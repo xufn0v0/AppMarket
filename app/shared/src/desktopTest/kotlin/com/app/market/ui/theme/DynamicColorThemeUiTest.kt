@@ -58,7 +58,7 @@ class DynamicColorThemeUiTest {
                 colorSchemeMode = colorSchemeModeFor(mode, dynamic),
             )
         }
-        MiuixTheme(colors = rememberAnimatedMiuixColors(controller.currentColors())) {
+        MiuixTheme(controller = controller) {
             val colors = MiuixTheme.colorScheme
             Column {
                 Box(

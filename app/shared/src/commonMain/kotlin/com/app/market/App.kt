@@ -48,7 +48,6 @@ import com.app.market.ui.theme.LocalEnableBlur
 import com.app.market.ui.theme.LocalEnableFloatingBottomBar
 import com.app.market.ui.theme.LocalEnableFloatingBottomBarBlur
 import com.app.market.ui.theme.LocalEnableNavigationBadge
-import com.app.market.ui.theme.rememberAnimatedMiuixColors
 import com.app.market.ui.util.LocalStripAppNameSubtitle
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
@@ -123,7 +122,7 @@ fun App(
             paletteStyle = effectiveStyle.toMiuixPaletteStyle(),
         )
     }
-    MiuixTheme(colors = rememberAnimatedMiuixColors(controller.currentColors())) {
+    MiuixTheme(controller = controller) {
         val systemDensity = LocalDensity.current
         val scaledDensity = remember(systemDensity, pageScale) {
             Density(systemDensity.density * pageScale, systemDensity.fontScale)
