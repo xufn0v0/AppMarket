@@ -3,8 +3,6 @@ package com.app.market.ui.screen
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
@@ -21,7 +19,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -64,6 +61,7 @@ import com.app.market.viewmodel.ThemeSettingsViewModel
 import org.jetbrains.compose.resources.stringResource
 import top.yukonga.miuix.kmp.basic.Slider
 import top.yukonga.miuix.kmp.basic.SliderDefaults
+import top.yukonga.miuix.kmp.basic.Surface
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.preference.ArrowPreference
 import top.yukonga.miuix.kmp.preference.SwitchPreference
@@ -194,15 +192,14 @@ private fun ThemeSettingsContent(
                                 summary = state.monetSeedColor?.let { seedHex(it) }
                                     ?: stringResource(Res.string.theme_seed_follow_wallpaper),
                                 endActions = {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(18.dp)
-                                            .clip(CircleShape)
-                                            .background(
-                                                state.monetSeedColor?.let { Color(it) }
-                                                    ?: MiuixTheme.colorScheme.dividerLine,
-                                            ),
-                                    )
+                                    Surface(
+                                        modifier = Modifier.size(18.dp),
+                                        shape = CircleShape,
+                                        color = state.monetSeedColor?.let { Color(it) }
+                                            ?: MiuixTheme.colorScheme.dividerLine,
+                                    ) {
+                                        // Decorative read-only preview dot (MUIX Surface).
+                                    }
                                 },
                                 onClick = { showSeedDialog = !showSeedDialog },
                                 holdDownState = showSeedDialog,

@@ -1,24 +1,21 @@
 package com.app.market.ui.component
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.app.market.domain.model.preference.ThemeMode
 import com.app.market.resources.Res
@@ -29,10 +26,18 @@ import com.app.market.resources.theme_appearance_system
 import com.app.market.resources.theme_seed_color
 import com.app.market.resources.theme_seed_follow_wallpaper
 import org.jetbrains.compose.resources.stringResource
-import top.yukonga.miuix.kmp.basic.RadioButton
-import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.basic.Surface
 import top.yukonga.miuix.kmp.overlay.OverlayDialog
+import top.yukonga.miuix.kmp.preference.RadioButtonPreference
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import java.util.Locale
+
+/**
+ * Horizontal padding is left to the dialog's own insets (24dp); preference rows keep their
+ * vertical rhythm only, avoiding the double horizontal indent of nesting BasicComponent
+ * (16dp inside margin) inside the dialog.
+ */
+private val SelectionRowMargin = PaddingValues(start = 0.dp, top = 12.dp, end = 0.dp, bottom = 12.dp)
 
 /**
  * Dialog for picking the app appearance. Selecting an option applies it immediately so the
@@ -50,22 +55,21 @@ fun ThemeModeDialog(
         title = stringResource(Res.string.theme_appearance),
         onDismissRequest = onDismissRequest,
     ) {
-        RadioRow(
-            selected = modeProvider() == ThemeMode.SYSTEM,
+        SelectionRow(
             label = stringResource(Res.string.theme_appearance_system),
+            selected = modeProvider() == ThemeMode.SYSTEM,
             onClick = { onModeSelect(ThemeMode.SYSTEM) },
         )
-        RadioRow(
-            selected = modeProvider() == ThemeMode.LIGHT,
+        SelectionRow(
             label = stringResource(Res.string.theme_appearance_light),
+            selected = modeProvider() == ThemeMode.LIGHT,
             onClick = { onModeSelect(ThemeMode.LIGHT) },
         )
-        RadioRow(
-            selected = modeProvider() == ThemeMode.DARK,
+        SelectionRow(
             label = stringResource(Res.string.theme_appearance_dark),
+            selected = modeProvider() == ThemeMode.DARK,
             onClick = { onModeSelect(ThemeMode.DARK) },
         )
-        Spacer(Modifier.padding(bottom = 8.dp))
     }
 }
 
@@ -97,12 +101,12 @@ fun SeedColorDialog(
         title = stringResource(Res.string.theme_seed_color),
         onDismissRequest = onDismissRequest,
     ) {
-        RadioRow(
-            selected = seedProvider() == null,
+        SelectionRow(
             label = stringResource(Res.string.theme_seed_follow_wallpaper),
+            selected = seedProvider() == null,
             onClick = { onSeedSelect(null) },
         )
-        Spacer(Modifier.padding(bottom = 12.dp))
+        Spacer(Modifier.size(8.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -111,7 +115,7 @@ fun SeedColorDialog(
                 SeedSwatch(argb = argb, selected = seedProvider() == argb, onClick = { onSeedSelect(argb) })
             }
         }
-        Spacer(Modifier.padding(bottom = 8.dp))
+        Spacer(Modifier.size(8.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -120,48 +124,46 @@ fun SeedColorDialog(
                 SeedSwatch(argb = argb, selected = seedProvider() == argb, onClick = { onSeedSelect(argb) })
             }
         }
-        Spacer(Modifier.padding(bottom = 8.dp))
     }
 }
 
+/** Shared single-choice row: MUIX [RadioButtonPreference] with dialog-aligned insets. */
 @Composable
-private fun RadioRow(
-    selected: Boolean,
+private fun SelectionRow(
     label: String,
+    selected: Boolean,
     onClick: () -> Unit,
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .selectable(selected = selected, role = Role.RadioButton, onClick = onClick)
-            .padding(vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        RadioButton(selected = selected, onClick = null)
-        Spacer(Modifier.width(12.dp))
-        Text(text = label, color = MiuixTheme.colorScheme.onSurface)
-    }
+    RadioButtonPreference(
+        title = label,
+        selected = selected,
+        onClick = onClick,
+        insideMargin = SelectionRowMargin,
+    )
 }
 
 @Composable
 private fun SeedSwatch(
     argb: Int,
     selected: Boolean,
-    onClick: () -> Unit,
-) {
-    val color = Color(argb)
-    Box(
+    onClick: () -> Unit) {
+    val hexLabel = "#" + (argb and 0xFFFFFF).toString(16).uppercase(Locale.US).padStart(6, '0')
+    Surface(
+        onClick = onClick,
         modifier = Modifier
-            .size(40.dp)
-            .clip(CircleShape)
-            .background(color)
-            .border(
-                border = BorderStroke(
-                    width = if (selected) 3.dp else 1.dp,
-                    color = if (selected) MiuixTheme.colorScheme.onSurface else MiuixTheme.colorScheme.dividerLine,
-                ),
-                shape = CircleShape,
-            )
-            .selectable(selected = selected, role = Role.RadioButton, onClick = onClick),
-    )
+            .size(42.dp)
+            .semantics {
+                role = Role.RadioButton
+                this.selected = selected
+                contentDescription = hexLabel
+            },
+        shape = CircleShape,
+        color = Color(argb),
+        border = BorderStroke(
+            width = if (selected) 3.dp else 1.dp,
+            color = if (selected) MiuixTheme.colorScheme.primary else MiuixTheme.colorScheme.dividerLine,
+        ),
+    ) {
+        // MUIX Surface supplies the Miuix press indication; content stays empty.
+    }
 }
