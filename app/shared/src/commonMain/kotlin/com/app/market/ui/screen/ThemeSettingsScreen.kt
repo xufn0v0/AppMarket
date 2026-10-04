@@ -3,12 +3,16 @@ package com.app.market.ui.screen
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -17,15 +21,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.app.market.domain.model.preference.ThemeMode
 import com.app.market.platform.isBlurSettingSupported
 import com.app.market.platform.isDynamicColorSupported
 import com.app.market.platform.isPredictiveBackSupported
 import com.app.market.resources.Res
 import com.app.market.resources.theme
+import com.app.market.resources.theme_appearance
+import com.app.market.resources.theme_appearance_dark
+import com.app.market.resources.theme_appearance_light
+import com.app.market.resources.theme_appearance_system
 import com.app.market.resources.theme_dynamic_color
 import com.app.market.resources.theme_dynamic_color_summary
 import com.app.market.resources.theme_enable_blur
@@ -40,10 +51,14 @@ import com.app.market.resources.theme_page_scale
 import com.app.market.resources.theme_page_scale_summary
 import com.app.market.resources.theme_predictive_back
 import com.app.market.resources.theme_predictive_back_summary
+import com.app.market.resources.theme_seed_color
+import com.app.market.resources.theme_seed_follow_wallpaper
 import com.app.market.ui.component.CardSegmentContainer
 import com.app.market.ui.component.MarketScaffold
 import com.app.market.ui.component.PageVerticalPadding
 import com.app.market.ui.component.ScaleDialog
+import com.app.market.ui.component.SeedColorDialog
+import com.app.market.ui.component.ThemeModeDialog
 import com.app.market.viewmodel.ThemeSettingsUiState
 import com.app.market.viewmodel.ThemeSettingsViewModel
 import org.jetbrains.compose.resources.stringResource
@@ -66,6 +81,8 @@ fun ThemeSettingsScreen(
     ThemeSettingsContent(
         state = state,
         onBack = onBack,
+        onThemeMode = viewModel::setThemeMode,
+        onMonetSeedColor = viewModel::setMonetSeedColor,
         onEnableDynamicColor = viewModel::setEnableDynamicColor,
         onEnableBlur = viewModel::setEnableBlur,
         onEnableFloatingBottomBar = viewModel::setEnableFloatingBottomBar,
@@ -84,6 +101,8 @@ fun ThemeSettingsScreen(
 private fun ThemeSettingsContent(
     state: ThemeSettingsUiState,
     onBack: () -> Unit,
+    onThemeMode: (ThemeMode) -> Unit,
+    onMonetSeedColor: (Int?) -> Unit,
     onEnableDynamicColor: (Boolean) -> Unit,
     onEnableBlur: (Boolean) -> Unit,
     onEnableFloatingBottomBar: (Boolean) -> Unit,
@@ -99,6 +118,15 @@ private fun ThemeSettingsContent(
     val layoutDirection = LocalLayoutDirection.current
     var sliderValue by remember(state.pageScale) { mutableFloatStateOf(state.pageScale) }
     var showScaleDialog by rememberSaveable { mutableStateOf(false) }
+    var showAppearanceDialog by rememberSaveable { mutableStateOf(false) }
+    var showSeedDialog by rememberSaveable { mutableStateOf(false) }
+    val appearanceLabel = stringResource(
+        when (state.themeMode) {
+            ThemeMode.SYSTEM -> Res.string.theme_appearance_system
+            ThemeMode.LIGHT -> Res.string.theme_appearance_light
+            ThemeMode.DARK -> Res.string.theme_appearance_dark
+        },
+    )
 
     MarketScaffold(
         title = stringResource(Res.string.theme),
@@ -119,10 +147,26 @@ private fun ThemeSettingsContent(
                 bottom = innerPadding.calculateBottomPadding() + PageVerticalPadding,
             ),
         ) {
+            item(key = "appearance") {
+                CardSegmentContainer(
+                    isFirst = true,
+                    isLast = false,
+                    horizontalPadding = 0.dp,
+                ) {
+                    ArrowPreference(
+                        title = stringResource(Res.string.theme_appearance),
+                        endActions = {
+                            Text(appearanceLabel, color = MiuixTheme.colorScheme.onSurfaceVariantActions)
+                        },
+                        onClick = { showAppearanceDialog = !showAppearanceDialog },
+                        holdDownState = showAppearanceDialog,
+                    )
+                }
+            }
             if (dynamicColorSupported) {
                 item(key = "dynamic-color") {
                     CardSegmentContainer(
-                        isFirst = true,
+                        isFirst = false,
                         isLast = false,
                         horizontalPadding = 0.dp,
                     ) {
@@ -134,11 +178,43 @@ private fun ThemeSettingsContent(
                         )
                     }
                 }
+                item(key = "monet-seed") {
+                    AnimatedVisibility(
+                        visible = state.enableDynamicColor,
+                        enter = expandVertically(),
+                        exit = shrinkVertically(),
+                    ) {
+                        CardSegmentContainer(
+                            isFirst = false,
+                            isLast = false,
+                            horizontalPadding = 0.dp,
+                        ) {
+                            ArrowPreference(
+                                title = stringResource(Res.string.theme_seed_color),
+                                summary = state.monetSeedColor?.let { seedHex(it) }
+                                    ?: stringResource(Res.string.theme_seed_follow_wallpaper),
+                                endActions = {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(18.dp)
+                                            .clip(CircleShape)
+                                            .background(
+                                                state.monetSeedColor?.let { Color(it) }
+                                                    ?: MiuixTheme.colorScheme.dividerLine,
+                                            ),
+                                    )
+                                },
+                                onClick = { showSeedDialog = !showSeedDialog },
+                                holdDownState = showSeedDialog,
+                            )
+                        }
+                    }
+                }
             }
             if (blurSupported) {
                 item(key = "blur") {
                     CardSegmentContainer(
-                        isFirst = !dynamicColorSupported,
+                        isFirst = false,
                         isLast = false,
                         horizontalPadding = 0.dp,
                     ) {
@@ -153,7 +229,7 @@ private fun ThemeSettingsContent(
             }
             item(key = "floating-bottom-bar") {
                 CardSegmentContainer(
-                    isFirst = !dynamicColorSupported && !blurSupported,
+                    isFirst = false,
                     isLast = false,
                     horizontalPadding = 0.dp,
                 ) {
@@ -253,5 +329,21 @@ private fun ThemeSettingsContent(
             scaleProvider = { state.pageScale },
             onScaleChange = onPageScale,
         )
+        ThemeModeDialog(
+            show = showAppearanceDialog,
+            onDismissRequest = { showAppearanceDialog = false },
+            modeProvider = { state.themeMode },
+            onModeSelect = onThemeMode,
+        )
+        SeedColorDialog(
+            show = showSeedDialog,
+            onDismissRequest = { showSeedDialog = false },
+            seedProvider = { state.monetSeedColor },
+            onSeedSelect = onMonetSeedColor,
+        )
     }
 }
+
+/** Formats an ARGB seed as "#RRGGBB" for display in the preference summary. */
+private fun seedHex(argb: Int): String =
+    "#" + (argb and 0xFFFFFF).toString(16).uppercase().padStart(6, '0')

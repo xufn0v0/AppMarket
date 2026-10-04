@@ -10,6 +10,8 @@ object ThemePreferenceKeys {
     val EnableFloatingBottomBarBlur = BooleanPreferenceKey(NS, "enable_floating_bottom_bar_blur")
     val EnableNavigationBadge = BooleanPreferenceKey(NS, "enable_navigation_badge", true)
     val EnableDynamicColor = BooleanPreferenceKey(NS, "enable_dynamic_color")
+    val ThemeMode = StringPreferenceKey(NS, "theme_mode")
+    val MonetSeedColor = StringPreferenceKey(NS, "monet_seed_color")
     val NavRailExpanded = BooleanPreferenceKey(NS, "nav_rail_expanded")
     val EnablePredictiveBack = BooleanPreferenceKey(NS, "enable_predictive_back")
     val PageScale = StringPreferenceKey(NS, "page_scale")

@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.app.market.domain.model.install.InstallUserAction
+import com.app.market.domain.model.preference.ThemeMode
 import com.app.market.domain.repository.DownloadRepository
 import com.app.market.domain.repository.InstallerPreferencesRepository
 import com.app.market.domain.repository.ProfileRepository
@@ -46,10 +47,12 @@ import com.app.market.ui.theme.LocalEnableBlur
 import com.app.market.ui.theme.LocalEnableFloatingBottomBar
 import com.app.market.ui.theme.LocalEnableFloatingBottomBarBlur
 import com.app.market.ui.theme.LocalEnableNavigationBadge
+import com.app.market.ui.theme.rememberAnimatedMiuixColors
 import com.app.market.ui.util.LocalStripAppNameSubtitle
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
+import androidx.compose.ui.graphics.Color
 import top.yukonga.miuix.kmp.basic.ButtonDefaults
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.theme.ColorSchemeMode
@@ -78,6 +81,8 @@ fun App(
     val enableFloatingBottomBarBlur by themePrefs.enableFloatingBottomBarBlur.collectAsStateWithLifecycle()
     val enableNavigationBadge by themePrefs.enableNavigationBadge.collectAsStateWithLifecycle()
     val enableDynamicColor by themePrefs.enableDynamicColor.collectAsStateWithLifecycle()
+    val themeMode by themePrefs.themeMode.collectAsStateWithLifecycle()
+    val monetSeedColor by themePrefs.monetSeedColor.collectAsStateWithLifecycle()
     val enablePredictiveBack by themePrefs.enablePredictiveBack.collectAsStateWithLifecycle()
     val pageScale by themePrefs.pageScale.collectAsStateWithLifecycle()
     val stripAppNameSubtitle by updatePrefs.stripAppNameSubtitle.collectAsStateWithLifecycle()
@@ -101,10 +106,13 @@ fun App(
     }
     LaunchedEffect(Unit) { runCatching { profileStore.syncFromServerIfDue() } }
     ApplyPredictiveBackPreference(enablePredictiveBack)
-    val controller = remember(enableDynamicColor) {
-        ThemeController(colorSchemeModeFor(enableDynamicColor))
+    val controller = remember(themeMode, enableDynamicColor, monetSeedColor) {
+        ThemeController(
+            colorSchemeMode = colorSchemeModeFor(themeMode, enableDynamicColor),
+            keyColor = monetSeedColor?.let(::Color),
+        )
     }
-    MiuixTheme(controller = controller) {
+    MiuixTheme(colors = rememberAnimatedMiuixColors(controller.currentColors())) {
         val systemDensity = LocalDensity.current
         val scaledDensity = remember(systemDensity, pageScale) {
             Density(systemDensity.density * pageScale, systemDensity.fontScale)
@@ -216,9 +224,14 @@ private fun UnknownSourcesPermissionDialog(
 }
 
 /**
- * Maps the persisted dynamic-color preference to the Miuix [ColorSchemeMode].
- * Monet modes follow the system light/dark setting; on platforms where wallpaper colors
+ * Maps the persisted appearance preferences to the Miuix [ColorSchemeMode].
+ * [ThemeMode.SYSTEM] follows the OS light/dark setting (auto-detected by Miuix);
+ * [ThemeMode.LIGHT]/[ThemeMode.DARK] force a fixed appearance. With [dynamicColor]
+ * enabled the Monet counterparts are used, and on platforms where wallpaper colors
  * are unavailable the Miuix library degrades to a static baseline palette.
  */
-internal fun colorSchemeModeFor(dynamicColor: Boolean): ColorSchemeMode =
-    if (dynamicColor) ColorSchemeMode.MonetSystem else ColorSchemeMode.System
+internal fun colorSchemeModeFor(themeMode: ThemeMode, dynamicColor: Boolean): ColorSchemeMode = when (themeMode) {
+    ThemeMode.SYSTEM -> if (dynamicColor) ColorSchemeMode.MonetSystem else ColorSchemeMode.System
+    ThemeMode.LIGHT -> if (dynamicColor) ColorSchemeMode.MonetLight else ColorSchemeMode.Light
+    ThemeMode.DARK -> if (dynamicColor) ColorSchemeMode.MonetDark else ColorSchemeMode.Dark
+}

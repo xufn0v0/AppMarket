@@ -86,6 +86,12 @@
     <string name="theme_navigation_badge_summary">Show the number of apps that can be updated</string>
     <string name="theme_dynamic_color">Dynamic color</string>
     <string name="theme_dynamic_color_summary">Extract colors from your wallpaper (Material You)</string>
+    <string name="theme_appearance">Appearance</string>
+    <string name="theme_appearance_system">Follow system</string>
+    <string name="theme_appearance_light">Light</string>
+    <string name="theme_appearance_dark">Dark</string>
+    <string name="theme_seed_color">Theme color</string>
+    <string name="theme_seed_follow_wallpaper">Follow wallpaper</string>
     <string name="theme_predictive_back">Predictive back</string>
     <string name="theme_predictive_back_summary">Enable predictive back gestures</string>
     <string name="theme_page_scale">Interface scale</string>

@@ -87,6 +87,12 @@
     <string name="theme_navigation_badge_summary">显示可更新应用数量</string>
     <string name="theme_dynamic_color">动态取色</string>
     <string name="theme_dynamic_color_summary">从壁纸提取颜色（Material You）</string>
+    <string name="theme_appearance">外观</string>
+    <string name="theme_appearance_system">跟随系统</string>
+    <string name="theme_appearance_light">浅色</string>
+    <string name="theme_appearance_dark">深色</string>
+    <string name="theme_seed_color">主题色</string>
+    <string name="theme_seed_follow_wallpaper">跟随壁纸</string>
     <string name="theme_predictive_back">预测性返回</string>
     <string name="theme_predictive_back_summary">启用预测性返回手势</string>
     <string name="theme_page_scale">界面缩放</string>
