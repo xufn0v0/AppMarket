@@ -37,7 +37,7 @@ android {
         applicationId = ProjectConfig.PACKAGE_NAME
         minSdk = ProjectConfig.Android.MIN_SDK
         targetSdk = ProjectConfig.Android.TARGET_SDK
-        versionCode = resolveVersionCode()
+        versionCode = appVersion.versionCode
         versionName = ProjectConfig.VERSION_NAME
 
         ndk {
