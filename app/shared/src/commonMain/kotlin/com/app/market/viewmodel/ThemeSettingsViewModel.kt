@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.market.domain.model.preference.ThemeMode
 import com.app.market.domain.repository.ThemePreferencesRepository
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -20,6 +21,8 @@ data class ThemeSettingsUiState(
     val enableDynamicColor: Boolean = false,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val monetSeedColor: Int? = null,
+    val showSeedColorPicker: Boolean = false,
+    val showScaleDialog: Boolean = false,
     val enablePredictiveBack: Boolean = false,
     val pageScale: Float = 1f,
 )
@@ -45,24 +48,37 @@ class ThemeSettingsViewModel(
         AppearancePreferences(blur, floating, dynamicColor, themeMode, seedColor)
     }
 
+    private val showSeedColorPicker = MutableStateFlow(false)
+    private val showScaleDialog = MutableStateFlow(false)
+
     val uiState: StateFlow<ThemeSettingsUiState> = combine(
-        appearance,
-        preferences.enableFloatingBottomBarBlur,
-        preferences.enableNavigationBadge,
-        preferences.enablePredictiveBack,
-        preferences.pageScale,
-    ) { appearance, glass, badge, predictiveBack, scale ->
-        ThemeSettingsUiState(
-            enableBlur = appearance.enableBlur,
-            enableFloatingBottomBar = appearance.enableFloatingBottomBar,
-            enableDynamicColor = appearance.enableDynamicColor,
-            themeMode = appearance.themeMode,
-            monetSeedColor = appearance.monetSeedColor,
-            enableFloatingBottomBarBlur = glass,
-            enableNavigationBadge = badge,
-            enablePredictiveBack = predictiveBack,
-            pageScale = scale,
-        )
+        combine(
+            combine(
+                appearance,
+                preferences.enableFloatingBottomBarBlur,
+                preferences.enableNavigationBadge,
+                preferences.enablePredictiveBack,
+                preferences.pageScale,
+            ) { appearance, glass, badge, predictiveBack, scale ->
+                ThemeSettingsUiState(
+                    enableBlur = appearance.enableBlur,
+                    enableFloatingBottomBar = appearance.enableFloatingBottomBar,
+                    enableDynamicColor = appearance.enableDynamicColor,
+                    themeMode = appearance.themeMode,
+                    monetSeedColor = appearance.monetSeedColor,
+                    enableFloatingBottomBarBlur = glass,
+                    enableNavigationBadge = badge,
+                    enablePredictiveBack = predictiveBack,
+                    pageScale = scale,
+                )
+            },
+            showSeedColorPicker,
+        ) { state, showPicker ->
+            state.copy(showSeedColorPicker = showPicker)
+        },
+        showScaleDialog,
+    ) { state, showScale ->
+        state.copy(showScaleDialog = showScale)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, ThemeSettingsUiState())
 
     fun setEnableBlur(value: Boolean) = persist { preferences.setEnableBlur(value) }
@@ -71,7 +87,27 @@ class ThemeSettingsViewModel(
     fun setEnableNavigationBadge(value: Boolean) = persist { preferences.setEnableNavigationBadge(value) }
     fun setEnableDynamicColor(value: Boolean) = persist { preferences.setEnableDynamicColor(value) }
     fun setThemeMode(value: ThemeMode) = persist { preferences.setThemeMode(value) }
-    fun setMonetSeedColor(value: Int?) = persist { preferences.setMonetSeedColor(value) }
+    fun setMonetSeedColor(value: Int?) = persist {
+        preferences.setMonetSeedColor(value)
+        showSeedColorPicker.value = false
+    }
+
+    fun showSeedColorPicker() {
+        showSeedColorPicker.value = true
+    }
+
+    fun dismissSeedColorPicker() {
+        showSeedColorPicker.value = false
+    }
+
+    fun showScaleDialog() {
+        showScaleDialog.value = true
+    }
+
+    fun dismissScaleDialog() {
+        showScaleDialog.value = false
+    }
+
     fun setEnablePredictiveBack(value: Boolean) = persist { preferences.setEnablePredictiveBack(value) }
     fun setPageScale(value: Float) = persist { preferences.setPageScale(value) }
 

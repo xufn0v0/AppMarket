@@ -88,8 +88,11 @@
     <string name="theme_dynamic_color_summary">Extract colors from your wallpaper (Material You)</string>
     <string name="theme_appearance">Appearance</string>
     <string name="theme_appearance_system">Follow system</string>
+    <string name="theme_appearance_system_summary">Adjust automatically based on your system theme</string>
     <string name="theme_appearance_light">Light</string>
+    <string name="theme_appearance_light_summary">Always use the light theme</string>
     <string name="theme_appearance_dark">Dark</string>
+    <string name="theme_appearance_dark_summary">Always use the dark theme</string>
     <string name="theme_seed_color">Theme color</string>
     <string name="theme_seed_follow_wallpaper">Follow wallpaper</string>
     <string name="theme_predictive_back">Predictive back</string>
