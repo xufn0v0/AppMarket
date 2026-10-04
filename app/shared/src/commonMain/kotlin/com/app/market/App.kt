@@ -30,6 +30,7 @@ import com.app.market.domain.repository.InstallerPreferencesRepository
 import com.app.market.domain.repository.ProfileRepository
 import com.app.market.domain.repository.ThemePreferencesRepository
 import com.app.market.domain.repository.UpdatePreferencesRepository
+import com.app.market.domain.theme.MonetColorDefaults
 import com.app.market.platform.ApplyPredictiveBackPreference
 import com.app.market.platform.UiPlatform
 import com.app.market.resources.Res
@@ -58,7 +59,9 @@ import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.theme.ColorSchemeMode
 import top.yukonga.miuix.kmp.theme.LocalContentColor
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import top.yukonga.miuix.kmp.theme.ThemeColorSpec
 import top.yukonga.miuix.kmp.theme.ThemeController
+import top.yukonga.miuix.kmp.theme.ThemePaletteStyle
 import top.yukonga.miuix.kmp.window.WindowDialog
 
 @Composable
@@ -109,7 +112,10 @@ fun App(
     val controller = remember(themeMode, enableDynamicColor, monetSeedColor) {
         ThemeController(
             colorSchemeMode = colorSchemeModeFor(themeMode, enableDynamicColor),
-            keyColor = monetSeedColor?.let(::Color),
+            keyColor = MonetColorDefaults.normalizeSeed(monetSeedColor)?.let(::Color),
+            // 显式固定 Monet 引擎默认算法参数，防止库版本升级带来的默认配色漂移
+            colorSpec = ThemeColorSpec.Spec2021,
+            paletteStyle = ThemePaletteStyle.TonalSpot,
         )
     }
     MiuixTheme(colors = rememberAnimatedMiuixColors(controller.currentColors())) {

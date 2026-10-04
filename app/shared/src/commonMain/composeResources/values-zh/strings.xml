@@ -93,6 +93,9 @@
     <string name="theme_appearance_dark">深色</string>
     <string name="theme_seed_color">主题色</string>
     <string name="theme_seed_follow_wallpaper">跟随壁纸</string>
+    <string name="theme_seed_primary">主色</string>
+    <string name="theme_seed_tertiary">第三色</string>
+    <string name="theme_seed_error">错误色</string>
     <string name="theme_predictive_back">预测性返回</string>
     <string name="theme_predictive_back_summary">启用预测性返回手势</string>
     <string name="theme_page_scale">界面缩放</string>

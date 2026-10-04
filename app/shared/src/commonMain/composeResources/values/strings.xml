@@ -92,6 +92,9 @@
     <string name="theme_appearance_dark">Dark</string>
     <string name="theme_seed_color">Theme color</string>
     <string name="theme_seed_follow_wallpaper">Follow wallpaper</string>
+    <string name="theme_seed_primary">Primary</string>
+    <string name="theme_seed_tertiary">Tertiary</string>
+    <string name="theme_seed_error">Error</string>
     <string name="theme_predictive_back">Predictive back</string>
     <string name="theme_predictive_back_summary">Enable predictive back gestures</string>
     <string name="theme_page_scale">Interface scale</string>

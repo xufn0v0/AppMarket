@@ -3,6 +3,7 @@ package com.app.market.viewmodel
 import com.app.market.colorSchemeModeFor
 import com.app.market.domain.model.preference.ThemeMode
 import com.app.market.domain.repository.ThemePreferencesRepository
+import com.app.market.domain.theme.MonetColorDefaults
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -62,7 +63,7 @@ class ThemeSettingsAppearanceTest {
             val preferences = FakeThemePreferences(
                 dynamicColor = true,
                 themeMode = ThemeMode.DARK,
-                monetSeedColor = 0xFF1565C0.toInt(),
+                monetSeedColor = MonetColorDefaults.DEFAULT_SEED_COLOR_ARGB,
             )
             val viewModel = ThemeSettingsViewModel(preferences)
 
@@ -71,7 +72,7 @@ class ThemeSettingsAppearanceTest {
             val state = viewModel.uiState.value
             assertTrue(state.enableDynamicColor)
             assertEquals(ThemeMode.DARK, state.themeMode)
-            assertEquals(0xFF1565C0.toInt(), state.monetSeedColor)
+            assertEquals(MonetColorDefaults.DEFAULT_SEED_COLOR_ARGB, state.monetSeedColor)
         } finally {
             Dispatchers.resetMain()
         }
@@ -105,16 +106,16 @@ class ThemeSettingsAppearanceTest {
             advanceUntilIdle()
             assertNull(viewModel.uiState.value.monetSeedColor)
 
-            viewModel.setMonetSeedColor(0xFF006A60.toInt())
+            viewModel.setMonetSeedColor(0xFF625B71.toInt())
             advanceUntilIdle()
 
-            assertEquals(0xFF006A60.toInt(), viewModel.uiState.value.monetSeedColor)
+            assertEquals(0xFF625B71.toInt(), viewModel.uiState.value.monetSeedColor)
 
             viewModel.setMonetSeedColor(null)
             advanceUntilIdle()
 
             assertNull(viewModel.uiState.value.monetSeedColor)
-            assertEquals(listOf(0xFF006A60.toInt(), null), preferences.seedWrites)
+            assertEquals(listOf(0xFF625B71.toInt(), null), preferences.seedWrites)
         } finally {
             Dispatchers.resetMain()
         }

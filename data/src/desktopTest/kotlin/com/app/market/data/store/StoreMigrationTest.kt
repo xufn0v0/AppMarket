@@ -5,6 +5,7 @@ import com.app.market.data.local.PreferenceChanges
 import com.app.market.data.local.PreferencesDataSource
 import com.app.market.data.local.StringPreferenceKey
 import com.app.market.data.local.preferences.HistoryPreferenceKeys
+import com.app.market.data.local.preferences.ThemePreferenceKeys
 import com.app.market.data.local.preferences.UpdatePreferenceKeys
 import com.app.market.data.platform.ThemePlatformPreferences
 import com.app.market.domain.model.market.AppSource
@@ -76,6 +77,40 @@ class StoreMigrationTest {
         assertTrue(prefs.enablePredictiveBack.value)
         assertTrue(platform.lastPredictiveBackEnabled)
         scope.cancel()
+    }
+
+    @Test
+    fun themePrefsSafelyDegradeCorruptMonetSeedAndNormalizeWrites() = runTest {
+        val store = ControlledPreferencesDataSource(eagerDefaults = true)
+        val platform = RecordingThemePlatformPreferences()
+        val scope = CoroutineScope(SupervisorJob() + StandardTestDispatcher(testScheduler))
+        try {
+            val prefs = ThemePreferencesRepositoryImpl(store, scope, platform)
+            advanceUntilIdle()
+            assertEquals(null, prefs.monetSeedColor.value)
+
+            // 损坏的持久化值不得抛异常，安全降级为 null（跟随壁纸 / 引擎默认）
+            store.emit(ThemePreferenceKeys.MonetSeedColor, "not-a-color")
+            advanceUntilIdle()
+            assertEquals(null, prefs.monetSeedColor.value)
+
+            // 无符号十进制旧 / 外部写入值可被识别
+            store.emit(ThemePreferenceKeys.MonetSeedColor, "4284960932") // 0xFF6750A4
+            advanceUntilIdle()
+            assertEquals(0xFF6750A4.toInt(), prefs.monetSeedColor.value)
+
+            // 带透明通道的异常种子写入时被归一化为不透明
+            prefs.setMonetSeedColor(0x806750A4.toInt())
+            advanceUntilIdle()
+            assertEquals(0xFF6750A4.toInt(), prefs.monetSeedColor.value)
+            assertEquals(0xFF6750A4.toInt().toString(), store.read(ThemePreferenceKeys.MonetSeedColor))
+
+            prefs.setMonetSeedColor(null)
+            advanceUntilIdle()
+            assertEquals(null, prefs.monetSeedColor.value)
+        } finally {
+            scope.cancel()
+        }
     }
 
     @Test

@@ -50,7 +50,12 @@ import com.app.market.resources.theme_page_scale_summary
 import com.app.market.resources.theme_predictive_back
 import com.app.market.resources.theme_predictive_back_summary
 import com.app.market.resources.theme_seed_color
+import com.app.market.resources.theme_seed_error
 import com.app.market.resources.theme_seed_follow_wallpaper
+import com.app.market.resources.theme_seed_primary
+import com.app.market.resources.theme_seed_tertiary
+import com.app.market.domain.theme.MonetColorDefaults.DefaultRole
+import com.app.market.domain.theme.MonetColorDefaults
 import com.app.market.ui.component.MarketScaffold
 import com.app.market.ui.component.PageVerticalPadding
 import com.app.market.ui.component.ScaleDialog
@@ -130,7 +135,13 @@ fun ThemeSettingsScreen(
                             exit = shrinkVertically(),
                         ) {
                             val followWallpaperLabel = stringResource(Res.string.theme_seed_follow_wallpaper)
-                            val seedEntry = remember(state.monetSeedColor, followWallpaperLabel) {
+                            // Monet 引擎默认方案角色名（在 remember 外读取，语言切换时正确重建）
+                            val roleLabels = MonetDefaultRoleLabels(
+                                primary = stringResource(Res.string.theme_seed_primary),
+                                tertiary = stringResource(Res.string.theme_seed_tertiary),
+                                error = stringResource(Res.string.theme_seed_error),
+                            )
+                            val seedEntry = remember(state.monetSeedColor, followWallpaperLabel, roleLabels) {
                                 DropdownEntry(
                                     items = buildList {
                                         add(
@@ -141,16 +152,16 @@ fun ThemeSettingsScreen(
                                             ),
                                         )
                                         addAll(
-                                            PresetSeedColors.map { argb ->
+                                            MonetColorDefaults.defaultSeedSwatches.map { swatch ->
                                                 DropdownItem(
-                                                    text = seedHex(argb),
-                                                    selected = state.monetSeedColor == argb,
-                                                    onClick = { viewModel.setMonetSeedColor(argb) },
+                                                    text = "${roleLabels.of(swatch.role)}  ${seedHex(swatch.argb)}",
+                                                    selected = state.monetSeedColor == swatch.argb,
+                                                    onClick = { viewModel.setMonetSeedColor(swatch.argb) },
                                                     icon = { iconModifier ->
                                                         Surface(
                                                             modifier = iconModifier,
                                                             shape = CircleShape,
-                                                            color = Color(argb),
+                                                            color = Color(swatch.argb),
                                                         ) {
                                                             Spacer(Modifier.size(18.dp))
                                                         }
@@ -263,17 +274,18 @@ fun ThemeSettingsScreen(
     }
 }
 
-/** Preset seed colors offered for Monet palette generation (Material You style palette). */
-private val PresetSeedColors = listOf(
-    0xFF6750A4.toInt(),
-    0xFF006A60.toInt(),
-    0xFF1565C0.toInt(),
-    0xFF2E6B34.toInt(),
-    0xFF8A5A00.toInt(),
-    0xFFB3261E.toInt(),
-    0xFF984061.toInt(),
-    0xFF4A4458.toInt(),
-)
+/** Monet 引擎默认方案各语义角色的本地化名称。 */
+private data class MonetDefaultRoleLabels(
+    val primary: String,
+    val tertiary: String,
+    val error: String,
+) {
+    fun of(role: DefaultRole): String = when (role) {
+        DefaultRole.PRIMARY -> primary
+        DefaultRole.TERTIARY -> tertiary
+        DefaultRole.ERROR -> error
+    }
+}
 
 /** Formats an ARGB seed as "#RRGGBB" for display. */
 private fun seedHex(argb: Int): String =
