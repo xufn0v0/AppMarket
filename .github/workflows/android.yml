@@ -9,7 +9,6 @@ on:
     paths-ignore:
       - "README.md"
       - "doc/*"
-      - ".github/workflows/android.yml"
 
 jobs:
   build:
@@ -30,15 +29,41 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
 
+      - name: Run Unit and UI Tests
+        run: ./gradlew :app:shared:desktopTest :data:desktopTest --console=plain
+
       - name: Decode Signing Key
-        run: echo ${{ secrets.SIGNING_KEY }} | base64 -d > keystore.jks
+        if: ${{ secrets.SIGNING_KEY != '' }}
+        env:
+          KEYSTORE_PASS: ${{ secrets.KEY_STORE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          printf '%s' '${{ secrets.SIGNING_KEY }}' | base64 -d > keystore.jks
+          # Fail fast if the decoded secret is empty or not a valid keystore, instead of
+          # producing a corrupt file that breaks signing with an unrelated error later.
+          if [ ! -s keystore.jks ] ||
+             ! keytool -list -keystore keystore.jks -storepass "$KEYSTORE_PASS" >/dev/null 2>&1; then
+            echo "::error::SIGNING_KEY is missing or is not a valid keystore"
+            exit 1
+          fi
+          # Only expose the signing path when a verified keystore exists; without it the
+          # build falls back to the debug signing config automatically.
+          echo "KEYSTORE_PATH=${GITHUB_WORKSPACE}/keystore.jks" >> "$GITHUB_ENV"
 
       - name: Build Release APK
         run: |
-          ./gradlew :app:android:assembleRelease
-          echo "APK_FILE=$(find app/android/build/outputs/apk/release -name '*.apk' | head -n 1)" >> $GITHUB_ENV
+          set -euo pipefail
+          ./gradlew :app:android:assembleRelease --console=plain
+          APK_FILE="$(find app/android/build/outputs/apk/release -name '*.apk' | head -n 1)"
+          if [ -z "$APK_FILE" ] || [ ! -f "$APK_FILE" ]; then
+            echo "::error::Release APK was not produced"
+            exit 1
+          fi
+          echo "APK_FILE=$APK_FILE" >> "$GITHUB_ENV"
         env:
-          KEYSTORE_PATH: ${{ github.workspace }}/keystore.jks
+          # KEYSTORE_PATH is injected via GITHUB_ENV only when a valid keystore exists;
+          # redeclaring it here would set it to an empty string and break the null check
+          # that triggers the debug-signing fallback.
           KEYSTORE_PASS: ${{ secrets.KEY_STORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
@@ -47,6 +72,7 @@ jobs:
         if: ${{ !startsWith(github.ref, 'refs/tags/') }}
         uses: actions/upload-artifact@v7
         with:
+          name: app-market-android
           path: ${{ env.APK_FILE }}
           archive: false
 
