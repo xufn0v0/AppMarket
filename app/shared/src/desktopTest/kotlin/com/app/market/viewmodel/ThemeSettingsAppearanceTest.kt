@@ -3,7 +3,7 @@ package com.app.market.viewmodel
 import com.app.market.colorSchemeModeFor
 import com.app.market.domain.model.preference.ThemeMode
 import com.app.market.domain.repository.ThemePreferencesRepository
-import com.app.market.domain.theme.MonetColorDefaults
+
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -63,7 +63,6 @@ class ThemeSettingsAppearanceTest {
             val preferences = FakeThemePreferences(
                 dynamicColor = true,
                 themeMode = ThemeMode.DARK,
-                monetSeedColor = MonetColorDefaults.DEFAULT_SEED_COLOR_ARGB,
             )
             val viewModel = ThemeSettingsViewModel(preferences)
 
@@ -72,7 +71,6 @@ class ThemeSettingsAppearanceTest {
             val state = viewModel.uiState.value
             assertTrue(state.enableDynamicColor)
             assertEquals(ThemeMode.DARK, state.themeMode)
-            assertEquals(MonetColorDefaults.DEFAULT_SEED_COLOR_ARGB, state.monetSeedColor)
         } finally {
             Dispatchers.resetMain()
         }
@@ -92,30 +90,6 @@ class ThemeSettingsAppearanceTest {
 
             assertEquals(ThemeMode.LIGHT, viewModel.uiState.value.themeMode)
             assertEquals(listOf(ThemeMode.LIGHT), preferences.themeModeWrites)
-        } finally {
-            Dispatchers.resetMain()
-        }
-    }
-
-    @Test
-    fun setMonetSeedColorPersistsRoundTrip() = runTest {
-        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
-        try {
-            val preferences = FakeThemePreferences()
-            val viewModel = ThemeSettingsViewModel(preferences)
-            advanceUntilIdle()
-            assertNull(viewModel.uiState.value.monetSeedColor)
-
-            viewModel.setMonetSeedColor(0xFF625B71.toInt())
-            advanceUntilIdle()
-
-            assertEquals(0xFF625B71.toInt(), viewModel.uiState.value.monetSeedColor)
-
-            viewModel.setMonetSeedColor(null)
-            advanceUntilIdle()
-
-            assertNull(viewModel.uiState.value.monetSeedColor)
-            assertEquals(listOf(0xFF625B71.toInt(), null), preferences.seedWrites)
         } finally {
             Dispatchers.resetMain()
         }
@@ -143,7 +117,6 @@ class ThemeSettingsAppearanceTest {
 private class FakeThemePreferences(
     dynamicColor: Boolean = false,
     themeMode: ThemeMode = ThemeMode.SYSTEM,
-    monetSeedColor: Int? = null,
 ) : ThemePreferencesRepository {
     override val initialized: StateFlow<Boolean> = MutableStateFlow(true)
     override val enableBlur = MutableStateFlow(false)
@@ -152,14 +125,12 @@ private class FakeThemePreferences(
     override val enableNavigationBadge = MutableStateFlow(true)
     override val enableDynamicColor = MutableStateFlow(dynamicColor)
     override val themeMode = MutableStateFlow(themeMode)
-    override val monetSeedColor = MutableStateFlow(monetSeedColor)
     override val navRailExpanded = MutableStateFlow(false)
     override val enablePredictiveBack = MutableStateFlow(false)
     override val pageScale = MutableStateFlow(1f)
 
     val dynamicColorWrites = mutableListOf<Boolean>()
     val themeModeWrites = mutableListOf<ThemeMode>()
-    val seedWrites = mutableListOf<Int?>()
 
     override suspend fun setEnableBlur(value: Boolean) = Unit
     override suspend fun setEnableFloatingBottomBar(value: Boolean) = Unit
@@ -174,11 +145,6 @@ private class FakeThemePreferences(
     override suspend fun setThemeMode(value: ThemeMode) {
         themeModeWrites += value
         themeMode.value = value
-    }
-
-    override suspend fun setMonetSeedColor(value: Int?) {
-        seedWrites += value
-        monetSeedColor.value = value
     }
 
     override suspend fun setNavRailExpanded(value: Boolean) = Unit

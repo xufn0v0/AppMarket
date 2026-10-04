@@ -2,17 +2,17 @@
 
 - 日期：2026-10-05
 - 被测版本：`top.yukonga.miuix.kmp` 0.9.4-rc01
-- 引擎参数（全端锁定）：种子 `#6750A4`、颜色规范 `Spec2021`（MD3）、调色板风格 `TonalSpot`
+- 引擎参数（全端锁定）：颜色规范 `Spec2021`（MD3）、调色板风格 `TonalSpot`；`keyColor = null`（动态取色开启时跟随壁纸，关闭时走系统默认静态方案）
 - 测试平台：JVM Desktop（`desktopTest`，走与生产环境完全相同的公开装配路径 `ThemeController`）
 - 官方命名映射：`MaterialDesignColors`（30 核心角色 + 19 扩展角色）→ `MaterialColorSchemeMapping` → Miuix `ThemeController`
 
 ## 1. 测试目标
 
-1. 验证旧的人工挑选种子方案已全面替换为 Monet 引擎默认配色方案，且动态取色、种子覆盖、浅/深色、跟随壁纸等 monet 功能模块完整保留；
-2. 验证引擎默认方案与主题色系统之间的映射关系（显式默认种子与 `keyColor = null` 引擎内部回退完全等价）；
+1. 验证固定主题色预设已移除，仅保留动态取色开关；开关关闭时使用系统默认颜色方案，不叠加任何预设主题色；
+2. 验证引擎默认方案与主题色系统之间的映射关系（`keyColor = null` 时引擎内部回退与显式默认种子 `#6750A4` 完全等价）；
 3. 验证配色生成算法的确定性，以及在 5 种设备画像（机型、屏幕尺寸、密度、亮度、色温）下输出完全一致；
 4. 验证全部关键前景/背景角色对在浅、深色下满足 WCAG 2.1 AA（正文文本 4.5:1）；
-5. 验证持久化种子色的异常容错（损坏值降级、透明值归一化）。
+5. 验证动态取色开关、浅深色模式切换在 UI 装配链路下行为正确。
 
 ## 2. 方案替换与映射关系
 
@@ -36,21 +36,21 @@
 
 | 项 | 替换前 | 替换后 |
 |---|---|---|
-| 种子预设 | 8 个人工挑选色（蓝/青/绿/黄/红/粉/灰等） | Monet 引擎默认方案的 3 个可独立取色角色：主色 `#6750A4`、第三色 `#7D5260`、错误色 `#B3261E` |
+| 种子预设 | 8 个人工挑选色（蓝/青/绿/黄/红/粉/灰等） | **已移除全部固定主题色预设**；仅保留动态取色开关 |
+| 动态取色开关 | 开关 + 种子色下拉选择器 | 仅保留开关；关闭时 `keyColor = null` 走系统默认静态方案 |
 | 引擎规格 | 未显式指定（依赖库默认） | 显式 `Spec2021` |
 | 调色板样式 | 未显式指定 | 显式 `TonalSpot` |
 | 桌面端回退 | 库内部常量 `#6750A4`（隐式） | 同常量，并以 `DEFAULT_SEED_COLOR_ARGB` 显式固化、测试守护 |
-| 跟随壁纸 | 持久化空串 = `null` | 语义不变，解析链路加固 |
+| 跟随壁纸 | 持久化空串 = `null` | 语义不变；`keyColor = null` 时 Android 12+ 取壁纸，其余平台回退引擎默认种子 |
 
-说明：默认方案中的 secondary / neutral 系角色（`#625B71`、`#79747E` 等）经 TonalSpot 重新作为种子取色后会和谐化回主色相（实测生成 primary 与默认种子完全相同，如 `#65558F`），不构成独立的可选身份，故不作为预设；它们仍是引擎输出配色的组成部分，被全部 Miuix 组件正常消费。
+说明：固定主题色配置（含种子色下拉、持久化存储、种子编解码/归一化链路）已全部移除。动态取色开关关闭时，`ThemeController` 使用 `ColorSchemeMode.System/Light/Dark`（Miuix 静态系统默认方案），不叠加任何预设主题色；开启时使用 `MonetSystem/MonetLight/MonetDark`，`keyColor = null` 跟随壁纸或引擎默认。
 
 ## 3. 算法稳定性与异常处理
 
 | 机制 | 位置 | 行为 |
 |---|---|---|
-| 种子归一化 | `MonetColorDefaults.normalizeSeed` | `null` 透传（跟随壁纸/引擎回退）；非空值强制补 `0xFF` alpha，杜绝半透明种子导致引擎输出异常 |
-| 存储解析容错 | `MonetColorDefaults.parseStoredSeed` | 兼容有符号/无符号十进制；范围 `Int.MIN_VALUE..0xFFFFFFFF`；非法、空串、损坏数据一律降级为 `null`（跟随壁纸），不崩溃 |
 | 引擎参数锁定 | `App.kt` | `colorSpec = Spec2021`、`paletteStyle = TonalSpot` 显式传入，跨库版本升级保持稳定 |
+| 动态开关降级 | `colorSchemeModeFor` | 关闭时映射 `System/Light/Dark`（Miuix 静态系统默认方案），不叠加预设主题色 |
 | 设备无关性契约 | `MonetDefaultPaletteTest` | 配色生成不接收屏幕尺寸/密度/亮度/色温输入；测试固化该契约，任何把设备特性引入配色算法的改动都会使测试失败 |
 
 ## 4. 设备画像矩阵
@@ -79,9 +79,9 @@
 
 ## 5. 实测色值与 WCAG 对比度
 
-数据由 `dumpDefaultPalettesForReport` 经真实 `ThemeController` 装配后实测输出（CI 日志同步可见）。
+数据由 `dumpDefaultPaletteForReport` 经真实 `ThemeController` 装配后实测输出（CI 日志同步可见）。
 
-### 5.1 主色种子 PRIMARY `#6750A4`（引擎默认配色）
+### 5.1 引擎默认配色（种子 `#6750A4` / keyColor=null 回退）
 
 | 角色 | 浅色 | 深色 |
 |---|---|---|
@@ -106,43 +106,7 @@
 | onSurfaceContainerHigh / surfaceContainerHigh | 7.84 | 7.65 | ✅ |
 | onSurfaceContainerHighest / surfaceContainerHighest | 13.17 | 9.48 | ✅ |
 
-### 5.2 第三色种子 TERTIARY `#7D5260`（粉玫瑰强调色相）
-
-关键色值（浅）：primary `#8B4A61` / onPrimary `#FFFFFF`；primaryContainer `#FFD9E3` / `#6F334A`；background `#FFF8F8` / onBackground `#22191C`；error `#BA1A1A`。
-关键色值（深）：primary `#FFB0CA` / onPrimary `#541D33`；primaryContainer `#6F334A` / `#FFD9E3`；background `#191114` / onBackground `#EFDFE2`。
-
-| 角色对 | 浅色 | 深色 | AA 4.5:1 |
-|---|---|---|---|
-| onPrimary / primary | 6.46 | 7.69 | ✅ |
-| onPrimaryContainer / primaryContainer | 7.24 | 7.24 | ✅ |
-| onSecondaryContainer / secondaryContainer | 7.27 | 7.27 | ✅ |
-| onError / error | 6.46 | 7.72 | ✅ |
-| onErrorContainer / errorContainer | 7.24 | 7.24 | ✅ |
-| onBackground / background | 16.37 | 14.42 | ✅ |
-| onSurface / surface | 16.37 | 14.42 | ✅ |
-| onSurfaceContainer / surfaceContainer | 14.75 | 12.76 | ✅ |
-| onSurfaceContainerHigh / surfaceContainerHigh | 7.87 | 7.66 | ✅ |
-| onSurfaceContainerHighest / surfaceContainerHighest | 13.34 | 9.60 | ✅ |
-
-### 5.3 错误色种子 ERROR `#B3261E`（暖红警示色相）
-
-关键色值（浅）：primary `#904A42` / onPrimary `#FFFFFF`；primaryContainer `#FFDAD5` / `#73342C`；background `#FFF8F7` / onBackground `#231918`；error `#BA1A1A`。
-关键色值（深）：primary `#FFB4AA` / onPrimary `#561E18`；primaryContainer `#73342C` / `#FFDAD5`；background `#1A1110` / onBackground `#F1DEDC`。
-
-| 角色对 | 浅色 | 深色 | AA 4.5:1 |
-|---|---|---|---|
-| onPrimary / primary | 6.47 | 7.75 | ✅ |
-| onPrimaryContainer / primaryContainer | 7.20 | 7.20 | ✅ |
-| onSecondaryContainer / secondaryContainer | 7.25 | 7.25 | ✅ |
-| onError / error | 6.46 | 7.72 | ✅ |
-| onErrorContainer / errorContainer | 7.24 | 7.24 | ✅ |
-| onBackground / background | 16.36 | 14.34 | ✅ |
-| onSurface / surface | 16.36 | 14.34 | ✅ |
-| onSurfaceContainer / surfaceContainer | 14.76 | 12.69 | ✅ |
-| onSurfaceContainerHigh / surfaceContainerHigh | 7.90 | 7.67 | ✅ |
-| onSurfaceContainerHighest / surfaceContainerHighest | 13.26 | 9.55 | ✅ |
-
-### 5.4 装饰性角色说明
+### 5.2 装饰性角色说明
 
 `secondary/onSecondary` 在 Miuix 中是滑块轨道、开关轨道等**装饰填充**角色，引擎默认方案自身的实测对比度为 2.63（浅）/ 2.96（深），低于正文阈值；该角色不承载文本（交互控件的可辨识状态由 primary 滑块/拇指承担），按 WCAG 1.4.11 属非文本图形，不纳入 4.5:1 正文断言。承载文本的 `secondaryContainer/onSecondaryContainer` 实测 7.19~7.27，照常满足 AA。
 
@@ -162,16 +126,16 @@
 |---|---|---|
 | `MaterialDesignColorsTest`（domain） | 15 | 官方命名逐字断言（核心 30 / 扩展 19 / 调色板风格 9）、基线精确色值、fixed 跨模式一致、tone 位次、基线 AA |
 | `Md3SpecComplianceTest`（app/shared） | 6 | 30+19 角色映射可用性、引擎输出 vs Spec2021 TonalSpot 官方 tone 表（误差 ≤1.5）、Spec2025 AA 合规、默认种子与基线 primary tone 一致 |
-| `MonetColorDefaultsTest`（domain） | 13 | 默认种子常量、色板角色完整/不重复/不透明、种子编解码 round-trip、损坏值降级、透明值归一化、WCAG 对比度公式（黑/白=21）等 |
-| `MonetDefaultPaletteTest`（app/shared） | 5 | 显式默认种子 == 引擎回退；生成确定性；5 设备画像一致 + AA + 不透明；3 种子 × 浅/深 AA；实测色值 dump |
-| `DynamicColorThemeUiTest`（app/shared） | 6 | 动态取色开关、浅深切换、自定义种子覆盖基线、3 个默认方案种子在 UI 装配链路下的 AA |
-| `ThemeSettingsAppearanceTest`（app/shared） | 10 | 主题设置页外观与状态联动（种子常量已迁移到引擎默认方案） |
-| `StoreMigrationTest`（data） | 8 | 含损坏种子值安全降级 + 写回归一化的迁移测试 |
+| `MonetColorDefaultsTest`（domain） | 4 | 默认种子常量与引擎回退一致、WCAG 对比度公式（黑/白=21）、相同颜色=1、默认主色与白字 AA |
+| `MonetDefaultPaletteTest`（app/shared） | 5 | 显式默认种子 == 引擎回退；生成确定性；5 设备画像一致 + AA + 不透明；默认种子 × 浅/深 AA；实测色值 dump |
+| `DynamicColorThemeUiTest`（app/shared） | 4 | 动态取色开关切换调色板、强制深色切换、Monet 浅/深模式 AA |
+| `ThemeSettingsAppearanceTest`（app/shared） | 9 | `colorSchemeModeFor` 六组合映射、外观偏好流入 UIState、主题模式与动态开关持久化 |
+| `StoreMigrationTest`（data） | 7 | 导航栏展开/缩放/预测返回持久化、更新偏好与历史迁移 |
 
 ## 7. 结论
 
-1. 种子色方案已全面替换为 Monet 引擎默认配色（`#6750A4` / Spec2021 / TonalSpot），原有动态取色等功能与持久化语义完整保留；
+1. 固定主题色预设已全部移除，仅保留动态取色开关；开关关闭时使用系统默认静态方案，开启时 `keyColor = null` 跟随壁纸或引擎默认种子（`#6750A4` / Spec2021 / TonalSpot）；
 2. 色彩系统命名、基线色值、色调位次均与 MD3 / MD3E 官方规范逐字/逐值对齐，并经 `MaterialDesignColorsTest`、`Md3SpecComplianceTest` 自动化守护；
-3. 3 个可选默认方案角色种子在浅、深色下全部关键正文/容器角色对对比度区间为 **6.46~16.37（浅）/ 7.20~14.42（深）**，均显著高于 WCAG 2.1 AA 的 4.5:1 阈值；
+3. 引擎默认配色在浅、深色下全部关键正文/容器角色对对比度区间为 **6.46~16.20（浅）/ 7.20~14.35（深）**，均显著高于 WCAG 2.1 AA 的 4.5:1 阈值；
 4. 配色生成在 5 种设备画像下 29 个角色逐值一致，算法确定性与设备无关性有测试守护；
-5. 损坏/透明/越界种子值均有异常处理与测试覆盖，不会引发配色异常或崩溃。
+5. 界面布局与其他功能未受影响：外观/动态取色/模糊/悬浮底栏/导航角标/手势/界面缩放等设置项完整保留，仅种子色下拉选择器及其持久化链路被移除。

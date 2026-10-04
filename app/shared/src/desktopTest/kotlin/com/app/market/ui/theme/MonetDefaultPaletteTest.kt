@@ -128,13 +128,11 @@ class MonetDefaultPaletteTest {
     // --- WCAG 2.1 AA：每个默认方案种子 × 浅 / 深色 ---
 
     @Test
-    fun everyDefaultSwatchMeetsAaInBothAppearances() {
-        MonetColorDefaults.defaultSeedSwatches.forEach { swatch ->
-            listOf(false, true).forEach { dark ->
-                val colors = renderPalette(swatch.argb, dark)
-                assertAllCriticalPairsMeetAa(colors, "${swatch.role} / dark=$dark")
-                assertAllColorsOpaque(colors, "${swatch.role} / dark=$dark")
-            }
+    fun defaultSeedMeetsAaInBothAppearances() {
+        listOf(false, true).forEach { dark ->
+            val colors = renderPalette(MonetColorDefaults.DEFAULT_SEED_COLOR_ARGB, dark)
+            assertAllCriticalPairsMeetAa(colors, "defaultSeed / dark=$dark")
+            assertAllColorsOpaque(colors, "defaultSeed / dark=$dark")
         }
     }
 
@@ -227,28 +225,25 @@ class MonetDefaultPaletteTest {
     // --- 输出默认方案实际色值，供测试报告引用（CI 日志可见） ---
 
     @Test
-    fun dumpDefaultPalettesForReport() {
-        MonetColorDefaults.defaultSeedSwatches.forEach { swatch ->
-            listOf(false, true).forEach { dark ->
-                val colors = renderPalette(swatch.argb, dark)
-                val heading =
-                    "${swatch.role} (#${hex(Color(swatch.argb))}) / ${if (dark) "dark" else "light"}"
-                println(
-                    buildString {
-                        appendLine("### $heading")
-                        appendLine("primary=${hex(colors.primary)} onPrimary=${hex(colors.onPrimary)}")
-                        appendLine("primaryContainer=${hex(colors.primaryContainer)} onPrimaryContainer=${hex(colors.onPrimaryContainer)}")
-                        appendLine("secondary=${hex(colors.secondary)} onSecondary=${hex(colors.onSecondary)}")
-                        appendLine("error=${hex(colors.error)} onError=${hex(colors.onError)}")
-                        appendLine("background=${hex(colors.background)} onBackground=${hex(colors.onBackground)}")
-                        appendLine("surface=${hex(colors.surface)} onSurface=${hex(colors.onSurface)}")
-                        appendLine("outline=${hex(colors.outline)} dividerLine=${hex(colors.dividerLine)}")
-                        criticalContrastPairs(colors).forEach {
-                            appendLine("contrast ${it.name}: ${"%.2f".format(it.ratio())}")
-                        }
-                    },
-                )
-            }
+    fun dumpDefaultPaletteForReport() {
+        listOf(false, true).forEach { dark ->
+            val colors = renderPalette(MonetColorDefaults.DEFAULT_SEED_COLOR_ARGB, dark)
+            val heading = "DEFAULT (#${hex(Color(MonetColorDefaults.DEFAULT_SEED_COLOR_ARGB))}) / ${if (dark) "dark" else "light"}"
+            println(
+                buildString {
+                    appendLine("### $heading")
+                    appendLine("primary=${hex(colors.primary)} onPrimary=${hex(colors.onPrimary)}")
+                    appendLine("primaryContainer=${hex(colors.primaryContainer)} onPrimaryContainer=${hex(colors.onPrimaryContainer)}")
+                    appendLine("secondary=${hex(colors.secondary)} onSecondary=${hex(colors.onSecondary)}")
+                    appendLine("error=${hex(colors.error)} onError=${hex(colors.onError)}")
+                    appendLine("background=${hex(colors.background)} onBackground=${hex(colors.onBackground)}")
+                    appendLine("surface=${hex(colors.surface)} onSurface=${hex(colors.onSurface)}")
+                    appendLine("outline=${hex(colors.outline)} dividerLine=${hex(colors.dividerLine)}")
+                    criticalContrastPairs(colors).forEach {
+                        appendLine("contrast ${it.name}: ${"%.2f".format(it.ratio())}")
+                    }
+                },
+            )
         }
     }
 

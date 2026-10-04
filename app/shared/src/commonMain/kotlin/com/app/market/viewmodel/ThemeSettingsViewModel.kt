@@ -20,7 +20,6 @@ data class ThemeSettingsUiState(
     val enableNavigationBadge: Boolean = true,
     val enableDynamicColor: Boolean = false,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
-    val monetSeedColor: Int? = null,
     val showScaleDialog: Boolean = false,
     val enablePredictiveBack: Boolean = false,
     val pageScale: Float = 1f,
@@ -34,7 +33,6 @@ class ThemeSettingsViewModel(
         val enableFloatingBottomBar: Boolean,
         val enableDynamicColor: Boolean,
         val themeMode: ThemeMode,
-        val monetSeedColor: Int?,
     )
 
     private val appearance = combine(
@@ -42,9 +40,8 @@ class ThemeSettingsViewModel(
         preferences.enableFloatingBottomBar,
         preferences.enableDynamicColor,
         preferences.themeMode,
-        preferences.monetSeedColor,
-    ) { blur, floating, dynamicColor, themeMode, seedColor ->
-        AppearancePreferences(blur, floating, dynamicColor, themeMode, seedColor)
+    ) { blur, floating, dynamicColor, themeMode ->
+        AppearancePreferences(blur, floating, dynamicColor, themeMode)
     }
 
     private val showScaleDialog = MutableStateFlow(false)
@@ -62,7 +59,6 @@ class ThemeSettingsViewModel(
                 enableFloatingBottomBar = appearance.enableFloatingBottomBar,
                 enableDynamicColor = appearance.enableDynamicColor,
                 themeMode = appearance.themeMode,
-                monetSeedColor = appearance.monetSeedColor,
                 enableFloatingBottomBarBlur = glass,
                 enableNavigationBadge = badge,
                 enablePredictiveBack = predictiveBack,
@@ -80,7 +76,6 @@ class ThemeSettingsViewModel(
     fun setEnableNavigationBadge(value: Boolean) = persist { preferences.setEnableNavigationBadge(value) }
     fun setEnableDynamicColor(value: Boolean) = persist { preferences.setEnableDynamicColor(value) }
     fun setThemeMode(value: ThemeMode) = persist { preferences.setThemeMode(value) }
-    fun setMonetSeedColor(value: Int?) = persist { preferences.setMonetSeedColor(value) }
 
     fun showScaleDialog() {
         showScaleDialog.value = true

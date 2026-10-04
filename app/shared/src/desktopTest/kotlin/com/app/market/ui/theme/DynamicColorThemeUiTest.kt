@@ -50,15 +50,12 @@ class DynamicColorThemeUiTest {
     private fun ThemeHarness(
         initialMode: ThemeMode = ThemeMode.SYSTEM,
         initialDynamic: Boolean = false,
-        initialSeed: Int? = null,
     ) {
         var mode by remember { mutableStateOf(initialMode) }
         var dynamic by remember { mutableStateOf(initialDynamic) }
-        var seed by remember { mutableStateOf(initialSeed) }
-        val controller = remember(mode, dynamic, seed) {
+        val controller = remember(mode, dynamic) {
             ThemeController(
                 colorSchemeMode = colorSchemeModeFor(mode, dynamic),
-                keyColor = seed?.let { Color(it) },
             )
         }
         MiuixTheme(colors = rememberAnimatedMiuixColors(controller.currentColors())) {
@@ -123,54 +120,6 @@ class DynamicColorThemeUiTest {
             darkBackground.luminance() < lightBackground.luminance(),
         )
         assertNotEquals(lightPrimary, darkPrimary)
-    }
-
-    @Test
-    fun customSeedColorOverridesTheBaselinePalette() {
-        rule.setContent { ThemeHarness(initialMode = ThemeMode.LIGHT, initialDynamic = true) }
-        rule.waitForIdle()
-        val baselinePrimary = rule.onNodeWithTag("swatch").semanticsColor(primaryColor)
-
-        // 引擎默认方案的第三色角色种子（粉玫瑰色相），必须区别于默认主色种子生成的基线调色板
-        rule.setContent {
-            ThemeHarness(initialMode = ThemeMode.LIGHT, initialDynamic = true, initialSeed = 0xFF7D5260.toInt())
-        }
-        rule.waitForIdle()
-
-        val seededPrimary = rule.onNodeWithTag("swatch").semanticsColor(primaryColor)
-        assertNotEquals(baselinePrimary, seededPrimary)
-        val background = rule.onNodeWithTag("swatch").semanticsColor(backgroundColor)
-        val onBackground = rule.onNodeWithTag("swatch").semanticsColor(onBackgroundColor)
-        assertMeetsWcagAA(onBackground, background, "seeded palette")
-    }
-
-    @Test
-    fun everyEngineDefaultSwatchKeepsReadableContrastInHarness() {
-        // Monet 引擎默认方案中三颗可生成独立调色板的角色种子，经真实 ThemeController 装配后，
-        // 组件读取到的颜色都满足 AA
-        val defaultSwatches = listOf(
-            0xFF6750A4.toInt(),
-            0xFF7D5260.toInt(),
-            0xFFB3261E.toInt(),
-        )
-        listOf(ThemeMode.LIGHT, ThemeMode.DARK).forEach { mode ->
-            defaultSwatches.forEach { seed ->
-                rule.setContent {
-                    ThemeHarness(initialMode = mode, initialDynamic = true, initialSeed = seed)
-                }
-                rule.waitForIdle()
-                assertMeetsWcagAA(
-                    rule.onNodeWithTag("swatch").semanticsColor(onBackgroundColor),
-                    rule.onNodeWithTag("swatch").semanticsColor(backgroundColor),
-                    "swatch #${(seed and 0xFFFFFF).toString(16)} / $mode background",
-                )
-                assertMeetsWcagAA(
-                    rule.onNodeWithTag("swatch").semanticsColor(onPrimaryColor),
-                    rule.onNodeWithTag("swatch").semanticsColor(primaryColor),
-                    "swatch #${(seed and 0xFFFFFF).toString(16)} / $mode primary",
-                )
-            }
-        }
     }
 
     @Test

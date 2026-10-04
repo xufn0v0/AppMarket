@@ -5,22 +5,18 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
@@ -49,24 +45,14 @@ import com.app.market.resources.theme_page_scale
 import com.app.market.resources.theme_page_scale_summary
 import com.app.market.resources.theme_predictive_back
 import com.app.market.resources.theme_predictive_back_summary
-import com.app.market.resources.theme_seed_color
-import com.app.market.resources.theme_seed_error
-import com.app.market.resources.theme_seed_follow_wallpaper
-import com.app.market.resources.theme_seed_primary
-import com.app.market.resources.theme_seed_tertiary
-import com.app.market.domain.theme.MonetColorDefaults.DefaultRole
-import com.app.market.domain.theme.MonetColorDefaults
 import com.app.market.ui.component.MarketScaffold
 import com.app.market.ui.component.PageVerticalPadding
 import com.app.market.ui.component.ScaleDialog
 import com.app.market.viewmodel.ThemeSettingsViewModel
 import org.jetbrains.compose.resources.stringResource
 import top.yukonga.miuix.kmp.basic.Card
-import top.yukonga.miuix.kmp.basic.DropdownEntry
-import top.yukonga.miuix.kmp.basic.DropdownItem
 import top.yukonga.miuix.kmp.basic.Slider
 import top.yukonga.miuix.kmp.basic.SliderDefaults
-import top.yukonga.miuix.kmp.basic.Surface
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.preference.ArrowPreference
 import top.yukonga.miuix.kmp.preference.SwitchPreference
@@ -129,54 +115,6 @@ fun ThemeSettingsScreen(
                             checked = state.enableDynamicColor,
                             onCheckedChange = viewModel::setEnableDynamicColor,
                         )
-                        AnimatedVisibility(
-                            visible = state.enableDynamicColor,
-                            enter = expandVertically(),
-                            exit = shrinkVertically(),
-                        ) {
-                            val followWallpaperLabel = stringResource(Res.string.theme_seed_follow_wallpaper)
-                            // Monet 引擎默认方案角色名（在 remember 外读取，语言切换时正确重建）
-                            val roleLabels = MonetDefaultRoleLabels(
-                                primary = stringResource(Res.string.theme_seed_primary),
-                                tertiary = stringResource(Res.string.theme_seed_tertiary),
-                                error = stringResource(Res.string.theme_seed_error),
-                            )
-                            val seedEntry = remember(state.monetSeedColor, followWallpaperLabel, roleLabels) {
-                                DropdownEntry(
-                                    items = buildList {
-                                        add(
-                                            DropdownItem(
-                                                text = followWallpaperLabel,
-                                                selected = state.monetSeedColor == null,
-                                                onClick = { viewModel.setMonetSeedColor(null) },
-                                            ),
-                                        )
-                                        addAll(
-                                            MonetColorDefaults.defaultSeedSwatches.map { swatch ->
-                                                DropdownItem(
-                                                    text = "${roleLabels.of(swatch.role)}  ${seedHex(swatch.argb)}",
-                                                    selected = state.monetSeedColor == swatch.argb,
-                                                    onClick = { viewModel.setMonetSeedColor(swatch.argb) },
-                                                    icon = { iconModifier ->
-                                                        Surface(
-                                                            modifier = iconModifier,
-                                                            shape = CircleShape,
-                                                            color = Color(swatch.argb),
-                                                        ) {
-                                                            Spacer(Modifier.size(18.dp))
-                                                        }
-                                                    },
-                                                )
-                                            },
-                                        )
-                                    },
-                                )
-                            }
-                            WindowDropdownPreference(
-                                title = stringResource(Res.string.theme_seed_color),
-                                entry = seedEntry,
-                            )
-                        }
                     }
                 }
             }
@@ -273,20 +211,3 @@ fun ThemeSettingsScreen(
         )
     }
 }
-
-/** Monet 引擎默认方案各语义角色的本地化名称。 */
-private data class MonetDefaultRoleLabels(
-    val primary: String,
-    val tertiary: String,
-    val error: String,
-) {
-    fun of(role: DefaultRole): String = when (role) {
-        DefaultRole.PRIMARY -> primary
-        DefaultRole.TERTIARY -> tertiary
-        DefaultRole.ERROR -> error
-    }
-}
-
-/** Formats an ARGB seed as "#RRGGBB" for display. */
-private fun seedHex(argb: Int): String =
-    "#" + (argb and 0xFFFFFF).toString(16).uppercase().padStart(6, '0')

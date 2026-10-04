@@ -13,8 +13,6 @@ interface ThemePreferencesRepository {
     val enableDynamicColor: StateFlow<Boolean>
     val themeMode: StateFlow<ThemeMode>
 
-    /** ARGB seed overriding wallpaper extraction for Monet palettes; null follows the wallpaper. */
-    val monetSeedColor: StateFlow<Int?>
     val navRailExpanded: StateFlow<Boolean>
     val enablePredictiveBack: StateFlow<Boolean>
     val pageScale: StateFlow<Float>
@@ -25,7 +23,6 @@ interface ThemePreferencesRepository {
     suspend fun setEnableNavigationBadge(value: Boolean)
     suspend fun setEnableDynamicColor(value: Boolean)
     suspend fun setThemeMode(value: ThemeMode)
-    suspend fun setMonetSeedColor(value: Int?)
     suspend fun setNavRailExpanded(value: Boolean)
     suspend fun setEnablePredictiveBack(value: Boolean)
     suspend fun setPageScale(value: Float)

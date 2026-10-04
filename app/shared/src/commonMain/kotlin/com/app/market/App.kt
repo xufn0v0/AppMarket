@@ -31,7 +31,6 @@ import com.app.market.domain.repository.ProfileRepository
 import com.app.market.domain.repository.ThemePreferencesRepository
 import com.app.market.domain.repository.UpdatePreferencesRepository
 import com.app.market.domain.theme.MaterialDesignColors
-import com.app.market.domain.theme.MonetColorDefaults
 import com.app.market.platform.ApplyPredictiveBackPreference
 import com.app.market.platform.UiPlatform
 import com.app.market.resources.Res
@@ -86,7 +85,6 @@ fun App(
     val enableNavigationBadge by themePrefs.enableNavigationBadge.collectAsStateWithLifecycle()
     val enableDynamicColor by themePrefs.enableDynamicColor.collectAsStateWithLifecycle()
     val themeMode by themePrefs.themeMode.collectAsStateWithLifecycle()
-    val monetSeedColor by themePrefs.monetSeedColor.collectAsStateWithLifecycle()
     val enablePredictiveBack by themePrefs.enablePredictiveBack.collectAsStateWithLifecycle()
     val pageScale by themePrefs.pageScale.collectAsStateWithLifecycle()
     val stripAppNameSubtitle by updatePrefs.stripAppNameSubtitle.collectAsStateWithLifecycle()
@@ -110,10 +108,12 @@ fun App(
     }
     LaunchedEffect(Unit) { runCatching { profileStore.syncFromServerIfDue() } }
     ApplyPredictiveBackPreference(enablePredictiveBack)
-    val controller = remember(themeMode, enableDynamicColor, monetSeedColor) {
+    // 动态取色开启时 keyColor = null：跟随壁纸（Android）或引擎默认种子（桌面）；
+    // 关闭时走系统默认静态方案，不叠加任何预设主题色
+    val controller = remember(themeMode, enableDynamicColor) {
         ThemeController(
             colorSchemeMode = colorSchemeModeFor(themeMode, enableDynamicColor),
-            keyColor = MonetColorDefaults.normalizeSeed(monetSeedColor)?.let(::Color),
+            keyColor = null,
             // 显式固定 MD3 默认算法参数（Spec2021 + TonalSpot），防止库版本升级带来的配色漂移
             colorSpec = MaterialDesignColors.DEFAULT_SPEC.toMiuixThemeColorSpec(),
             paletteStyle = MaterialDesignColors.DEFAULT_PALETTE_STYLE.toMiuixPaletteStyle(),
