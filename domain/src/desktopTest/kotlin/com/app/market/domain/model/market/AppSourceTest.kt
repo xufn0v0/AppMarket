@@ -13,6 +13,20 @@ class AppSourceTest {
     }
 
     @Test
+    fun fdroidTokenRoundTripsAndDeclaresExpectedCapabilities() {
+        assertEquals(AppSource.FDROID, AppSource.fromToken("fdroid"))
+        assertEquals(setOf(AppSource.FDROID), AppSource.parse("fdroid"))
+
+        // F-Droid 提供独立更新检查，但只分发完整 APK，且无评论/今日/增量能力
+        assertTrue(AppSource.FDROID.capabilities.supportsUpdates)
+        assertFalse(AppSource.FDROID.capabilities.supportsComments)
+        assertFalse(AppSource.FDROID.capabilities.supportsSameDeveloperApps)
+        assertFalse(AppSource.FDROID.capabilities.supportsTodayFeed)
+        assertFalse(AppSource.FDROID.capabilities.reportsDeltaSize)
+        assertFalse(AppSource.FDROID.capabilities.prefersOpenLinkLaunch)
+    }
+
+    @Test
     fun capabilitiesMatchRoutingContract() {
         // 评论 / 同开发者应用目前只有小米与 OPPO 支持
         assertTrue(AppSource.XIAOMI.capabilities.supportsComments)

@@ -2,6 +2,8 @@ package com.app.market.di
 
 import com.app.market.data.download.RecordingDownloadRepositoryImpl
 import com.app.market.data.platform.debugLog
+import com.app.market.data.remote.fdroid.FdroidApi
+import com.app.market.data.remote.fdroid.FdroidIndexHttp
 import com.app.market.data.remote.honor.HonorApi
 import com.app.market.data.remote.honor.HonorProtocol
 import com.app.market.data.remote.huawei.HuaweiApi
@@ -20,6 +22,7 @@ import com.app.market.data.remote.xiaomi.XiaomiApi
 import com.app.market.data.remote.xiaomi.XiaomiClient
 import com.app.market.data.remote.xiaomi.XiaomiHttpClient
 import com.app.market.data.repository.AnonymousAccountRepositoryImpl
+import com.app.market.data.repository.FdroidRepositoryImpl
 import com.app.market.data.repository.HonorRepositoryImpl
 import com.app.market.data.repository.HuaweiRepositoryImpl
 import com.app.market.data.repository.MarketRepositoryImpl
@@ -37,6 +40,7 @@ import com.app.market.data.store.UpdateHistoryRepositoryImpl
 import com.app.market.data.store.UpdatePreferencesRepositoryImpl
 import com.app.market.domain.repository.AccountRepository
 import com.app.market.domain.repository.DownloadRepository
+import com.app.market.domain.repository.FdroidRepository
 import com.app.market.domain.repository.HonorRepository
 import com.app.market.domain.repository.HuaweiRepository
 import com.app.market.domain.repository.MarketRepository
@@ -105,6 +109,8 @@ private val commonDataModule = module {
     single { TapTapApiConfig() }
     singleOf(::TapTapApi)
     singleOf(::TapTapRepositoryImpl) { bind<TapTapRepository>() }
+    singleOf(::FdroidApi) { bind<FdroidIndexHttp>() }
+    singleOf(::FdroidRepositoryImpl) { bind<FdroidRepository>() }
     singleOf(::MarketSourceRepositoryImpl) { bind<MarketSourceRepository>() }
 
     singleOf(::RecordingDownloadRepositoryImpl) { bind<DownloadRepository>() }

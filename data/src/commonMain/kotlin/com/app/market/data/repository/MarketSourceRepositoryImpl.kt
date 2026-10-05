@@ -12,6 +12,7 @@ import com.app.market.domain.model.update.ManualUpdateRequest
 import com.app.market.domain.model.update.ManualUpdateResult
 import com.app.market.domain.repository.HonorRepository
 import com.app.market.domain.repository.HuaweiRepository
+import com.app.market.domain.repository.FdroidRepository
 import com.app.market.domain.repository.MarketRepository
 import com.app.market.domain.repository.MarketSourceRepository
 import com.app.market.domain.repository.OppoRepository
@@ -34,6 +35,7 @@ internal class MarketSourceRepositoryImpl(
     private val honor: HonorRepository,
     private val huawei: HuaweiRepository,
     private val tapTap: TapTapRepository,
+    private val fdroid: FdroidRepository,
 ) : MarketSourceRepository {
     override suspend fun search(source: AppSource, keyword: String, page: Int): SearchPage = when (source) {
         AppSource.XIAOMI -> market.search(keyword, page)
@@ -44,6 +46,7 @@ internal class MarketSourceRepositoryImpl(
         AppSource.HONOR -> honor.search(keyword, page)
         AppSource.HUAWEI -> huawei.search(keyword, page)
         AppSource.TAPTAP -> tapTap.search(keyword, page)
+        AppSource.FDROID -> fdroid.search(keyword, page)
     }
 
     override suspend fun appDetail(
@@ -67,6 +70,8 @@ internal class MarketSourceRepositoryImpl(
         AppSource.HONOR -> honor.appDetail(appId, packageName)
         AppSource.HUAWEI -> huawei.appDetail(appId, packageName)
         AppSource.TAPTAP -> tapTap.appDetail(appId, packageName)
+        // F-Droid 以 Android 包名为唯一键，无需站内 appId
+        AppSource.FDROID -> fdroid.appDetail(packageName)
     }
 
     override suspend fun appComments(source: AppSource, app: MarketAppInfo): AppComments {
@@ -90,6 +95,7 @@ internal class MarketSourceRepositoryImpl(
         AppSource.HONOR -> honor.downloadMeta(app)
         AppSource.HUAWEI -> huawei.downloadMeta(app)
         AppSource.TAPTAP -> tapTap.downloadMeta(app)
+        AppSource.FDROID -> fdroid.downloadMeta(app)
     }
 
     override suspend fun downloadUpdateMeta(source: AppSource, app: MarketAppInfo): DownloadMeta = when (source) {
@@ -102,6 +108,7 @@ internal class MarketSourceRepositoryImpl(
         AppSource.HONOR -> honor.downloadUpdateMeta(app)
         AppSource.HUAWEI -> huawei.downloadUpdateMeta(app)
         AppSource.TAPTAP -> tapTap.downloadUpdateMeta(app)
+        AppSource.FDROID -> fdroid.downloadUpdateMeta(app)
     }
 
     override suspend fun loadReconciledCachedUpdates(): List<MarketAppInfo> =
@@ -116,6 +123,7 @@ internal class MarketSourceRepositoryImpl(
         AppSource.HONOR -> flow { emit(honor.checkUpdates()) }
         AppSource.HUAWEI -> flow { emit(huawei.checkUpdates()) }
         AppSource.TAPTAP -> flow { emit(tapTap.checkUpdates()) }
+        AppSource.FDROID -> flow { emit(fdroid.checkUpdates()) }
     }
 
     override suspend fun checkManualUpdate(source: AppSource, request: ManualUpdateRequest): ManualUpdateResult =
@@ -129,13 +137,16 @@ internal class MarketSourceRepositoryImpl(
             AppSource.HONOR -> honor.checkManualUpdate(request)
             AppSource.HUAWEI -> huawei.checkManualUpdate(request)
             AppSource.TAPTAP -> tapTap.checkManualUpdate(request)
+            AppSource.FDROID -> fdroid.checkManualUpdate(request)
         }
 
     override suspend fun goldMiFeed(source: AppSource, page: Int, pageSize: Int): TodayFeedPage =
         when (source) {
             AppSource.OPPO -> oppo.beautyFeed(page, pageSize)
-            // 豌豆荚 / 三星 / 华为 / 荣耀无独立今日内容，回退小米商店今日
-            AppSource.XIAOMI, AppSource.WANDOUJIA, AppSource.SAMSUNG, AppSource.HUAWEI, AppSource.HONOR ->
+            // 豌豆荚 / 三星 / 华为 / 荣耀 / F-Droid 无独立今日内容，回退小米商店今日
+            AppSource.XIAOMI, AppSource.WANDOUJIA, AppSource.SAMSUNG, AppSource.HUAWEI,
+            AppSource.HONOR, AppSource.FDROID,
+            ->
                 today.goldMiFeed(page, pageSize)
 
             AppSource.VIVO -> vivo.auroraFeed(page, pageSize)
@@ -145,7 +156,9 @@ internal class MarketSourceRepositoryImpl(
     override suspend fun todayArticle(source: AppSource, rId: String): TodayArticle =
         when (source) {
             AppSource.OPPO -> oppo.beautyArticle(rId)
-            AppSource.XIAOMI, AppSource.WANDOUJIA, AppSource.SAMSUNG, AppSource.HUAWEI, AppSource.HONOR ->
+            AppSource.XIAOMI, AppSource.WANDOUJIA, AppSource.SAMSUNG, AppSource.HUAWEI,
+            AppSource.HONOR, AppSource.FDROID,
+            ->
                 today.todayArticle(rId)
 
             AppSource.VIVO -> vivo.auroraArticle(rId)
