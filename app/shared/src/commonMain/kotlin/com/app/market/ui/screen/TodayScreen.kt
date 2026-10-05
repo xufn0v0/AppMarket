@@ -46,7 +46,6 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
@@ -63,6 +62,10 @@ import com.app.market.resources.Res
 import com.app.market.resources.golden_award
 import com.app.market.resources.nav_today
 import com.app.market.resources.num_updates_pending
+import com.app.market.resources.pull_to_refresh
+import com.app.market.resources.refreshed
+import com.app.market.resources.refreshing
+import com.app.market.resources.release_to_refresh
 import com.app.market.resources.view
 import com.app.market.ui.component.AppAsyncImage
 import com.app.market.ui.component.AppButton
@@ -82,6 +85,7 @@ import top.yukonga.miuix.kmp.basic.ButtonDefaults
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.CardDefaults
 import top.yukonga.miuix.kmp.basic.InfiniteProgressIndicator
+import top.yukonga.miuix.kmp.basic.PullToRefresh
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.utils.overScrollVertical
@@ -100,9 +104,18 @@ fun TodayTab(
     onClickViewUpdates: () -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val updateState = updatesViewModel?.uiState?.collectAsStateWithLifecycle()?.value
     val listState = rememberLazyGridState()
     val currentState by rememberUpdatedState(state)
+    // 官方 PullToRefresh 四态文案，顺序与 PullToRefreshDefaults.refreshTexts 逐字对应：
+    // Pulling / ThresholdReached / Refreshing / RefreshComplete
+    val refreshTexts = listOf(
+        stringResource(Res.string.pull_to_refresh),
+        stringResource(Res.string.release_to_refresh),
+        stringResource(Res.string.refreshing),
+        stringResource(Res.string.refreshed),
+    )
     val pendingUpdates =
         if (updateState != null && !updateState.loading) updateState.updates else emptyList()
     val showUpdatesCard = pendingUpdates.isNotEmpty()
@@ -157,81 +170,92 @@ fun TodayTab(
                 )
                 return@Crossfade
             }
-            LazyVerticalGrid(
-                columns = GridCells.Adaptive(TodayGridMinCellWidth),
-                state = listState,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .scrollEndHaptic()
-                    .overScrollVertical()
-                    .nestedScroll(scrollBehavior.nestedScrollConnection),
-                contentPadding = PaddingValues(
-                    start = 12.dp,
-                    end = 12.dp,
-                    top = topPadding + PageVerticalPadding,
-                    bottom = bottomPadding + PageVerticalPadding,
-                ),
-                horizontalArrangement = Arrangement.spacedBy(20.dp),
+            // 阈值/颜色/圆径/动画全部沿用 PullToRefreshDefaults 官方规格；顶栏折叠联动通过
+            // topAppBarScrollBehavior 交给组件，由其内部统一串接 nested scroll 责任链
+            PullToRefresh(
+                isRefreshing = isRefreshing,
+                onRefresh = viewModel::refresh,
+                modifier = Modifier.fillMaxSize(),
+                // 指示器偏移到顶栏下缘
+                contentPadding = PaddingValues(top = topPadding),
+                topAppBarScrollBehavior = scrollBehavior,
+                refreshTexts = refreshTexts,
             ) {
-                if (showUpdatesCard) {
-                    item(
-                        key = "updates",
-                        span = { GridItemSpan(maxLineSpan) },
-                    ) {
-                        var pendingCardVisible by remember { mutableStateOf(false) }
-                        LaunchedEffect(Unit) { pendingCardVisible = true }
-                        AnimatedVisibility(
-                            visible = pendingCardVisible,
-                            enter = fadeIn(tween(220)) +
-                                    expandVertically(tween(300), expandFrom = Alignment.Top),
+                LazyVerticalGrid(
+                    columns = GridCells.Adaptive(TodayGridMinCellWidth),
+                    state = listState,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .scrollEndHaptic()
+                        .overScrollVertical(),
+                    contentPadding = PaddingValues(
+                        start = 12.dp,
+                        end = 12.dp,
+                        top = topPadding + PageVerticalPadding,
+                        bottom = bottomPadding + PageVerticalPadding,
+                    ),
+                    horizontalArrangement = Arrangement.spacedBy(20.dp),
+                ) {
+                    if (showUpdatesCard) {
+                        item(
+                            key = "updates",
+                            span = { GridItemSpan(maxLineSpan) },
                         ) {
-                            PendingUpdatesCard(
-                                updates = pendingUpdates,
-                                onClick = onClickViewUpdates,
-                                modifier = Modifier.padding(bottom = 20.dp),
+                            var pendingCardVisible by remember { mutableStateOf(false) }
+                            LaunchedEffect(Unit) { pendingCardVisible = true }
+                            AnimatedVisibility(
+                                visible = pendingCardVisible,
+                                enter = fadeIn(tween(220)) +
+                                        expandVertically(tween(300), expandFrom = Alignment.Top),
+                            ) {
+                                PendingUpdatesCard(
+                                    updates = pendingUpdates,
+                                    onClick = onClickViewUpdates,
+                                    modifier = Modifier.padding(bottom = 20.dp),
+                                )
+                            }
+                        }
+                    }
+                    items(state.feed.items, key = { "feed-${it.rId.ifBlank { it.articleLink }}" }) { item ->
+                        FeaturedArticleCard(
+                            item = item,
+                            fullCoverOverlay = state.source.capabilities.todayFullCoverOverlay,
+                            modifier = Modifier
+                                .animateItem(placementSpec = null)
+                                .padding(bottom = 20.dp),
+                        ) {
+                            openArticle(item, onClickArticle)
+                        }
+                    }
+                    if (state.feedLoading || state.feedLoadingMore) {
+                        item(
+                            key = "feed-loading",
+                            span = { GridItemSpan(maxLineSpan) },
+                        ) {
+                            Box(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                InfiniteProgressIndicator(size = 24.dp)
+                            }
+                        }
+                    }
+                    if (state.feedError.isNotBlank()) {
+                        item(
+                            key = "feed-error",
+                            span = { GridItemSpan(maxLineSpan) },
+                        ) {
+                            Text(
+                                text = state.feedError,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable(onClick = viewModel::retryFeed)
+                                    .padding(16.dp),
+                                color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                                style = MiuixTheme.textStyles.body2.copy(lineHeight = 18.sp),
+                                textAlign = TextAlign.Center,
                             )
                         }
-                    }
-                }
-                items(state.feed.items, key = { "feed-${it.rId.ifBlank { it.articleLink }}" }) { item ->
-                    FeaturedArticleCard(
-                        item = item,
-                        fullCoverOverlay = state.source.capabilities.todayFullCoverOverlay,
-                        modifier = Modifier
-                            .animateItem(placementSpec = null)
-                            .padding(bottom = 20.dp),
-                    ) {
-                        openArticle(item, onClickArticle)
-                    }
-                }
-                if (state.feedLoading || state.feedLoadingMore) {
-                    item(
-                        key = "feed-loading",
-                        span = { GridItemSpan(maxLineSpan) },
-                    ) {
-                        Box(
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            InfiniteProgressIndicator(size = 24.dp)
-                        }
-                    }
-                }
-                if (state.feedError.isNotBlank()) {
-                    item(
-                        key = "feed-error",
-                        span = { GridItemSpan(maxLineSpan) },
-                    ) {
-                        Text(
-                            text = state.feedError,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable(onClick = viewModel::retryFeed)
-                                .padding(16.dp),
-                            color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
-                            style = MiuixTheme.textStyles.body2.copy(lineHeight = 18.sp),
-                            textAlign = TextAlign.Center,
-                        )
                     }
                 }
             }

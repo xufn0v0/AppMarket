@@ -34,7 +34,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -63,6 +62,10 @@ import com.app.market.resources.nav_updates
 import com.app.market.resources.no_change_log
 import com.app.market.resources.no_updates
 import com.app.market.resources.num_updates_pending
+import com.app.market.resources.pull_to_refresh
+import com.app.market.resources.refreshed
+import com.app.market.resources.refreshing
+import com.app.market.resources.release_to_refresh
 import com.app.market.resources.update
 import com.app.market.resources.update_all
 import com.app.market.resources.update_check_failed
@@ -85,6 +88,7 @@ import org.koin.compose.koinInject
 import top.yukonga.miuix.kmp.basic.ButtonDefaults
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.Icon
+import top.yukonga.miuix.kmp.basic.PullToRefresh
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Back
@@ -100,8 +104,17 @@ fun UpdatesTab(
 ) {
     val uiPlatform = koinInject<UiPlatform>()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val downloadStates = viewModel.downloadStates.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
+    // 官方 PullToRefresh 四态文案，顺序与 PullToRefreshDefaults.refreshTexts 逐字对应：
+    // Pulling / ThresholdReached / Refreshing / RefreshComplete
+    val refreshTexts = listOf(
+        stringResource(Res.string.pull_to_refresh),
+        stringResource(Res.string.release_to_refresh),
+        stringResource(Res.string.refreshing),
+        stringResource(Res.string.refreshed),
+    )
 
     MainTabScaffold(
         title = stringResource(Res.string.nav_updates)
@@ -145,19 +158,28 @@ fun UpdatesTab(
                     listPadding
                 )
 
-                UpdatesContent.Cards -> UpdatesCardList(
-                    updates = state.updates,
-                    downloadStates = downloadStates,
-                    listState = listState,
-                    listPadding = listPadding,
-                    viewModel = viewModel,
-                    onOpenDetail = onOpenDetail,
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .scrollEndHaptic()
-                        .overScrollVertical()
-                        .nestedScroll(scrollBehavior.nestedScrollConnection)
-                )
+                UpdatesContent.Cards -> PullToRefresh(
+                    isRefreshing = isRefreshing,
+                    onRefresh = viewModel::refresh,
+                    modifier = Modifier.fillMaxSize(),
+                    // 指示器偏移到顶栏下缘；阈值/颜色/圆径/动画全部沿用 PullToRefreshDefaults 官方规格
+                    contentPadding = PaddingValues(top = topPadding),
+                    topAppBarScrollBehavior = scrollBehavior,
+                    refreshTexts = refreshTexts,
+                ) {
+                    UpdatesCardList(
+                        updates = state.updates,
+                        downloadStates = downloadStates,
+                        listState = listState,
+                        listPadding = listPadding,
+                        viewModel = viewModel,
+                        onOpenDetail = onOpenDetail,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .scrollEndHaptic()
+                            .overScrollVertical(),
+                    )
+                }
             }
         }
     }

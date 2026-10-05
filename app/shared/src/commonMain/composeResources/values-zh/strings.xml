@@ -55,6 +55,10 @@
     <string name="show_system_apps_summary">在可更新列表中包含系统应用</string>
     <string name="no_updates">所有应用均为最新</string>
     <string name="update_check_failed">检查更新失败</string>
+    <string name="pull_to_refresh">下拉刷新</string>
+    <string name="release_to_refresh">释放立即刷新</string>
+    <string name="refreshing">正在刷新…</string>
+    <string name="refreshed">刷新成功</string>
     <string name="go_to_settings">去授权</string>
     <string name="app_list_permission_required">需要授予应用列表权限才能检查更新</string>
     <string name="app_list_permission_refresh_hint">如果你已经授予权限，可能需要下拉刷新以加载应用列表。</string>

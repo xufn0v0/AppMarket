@@ -41,6 +41,10 @@ class TodayViewModel(
     private val _uiState = MutableStateFlow(TodayUiState(source = prefs.todaySource.value))
     val uiState = _uiState.asStateFlow()
 
+    // 下拉刷新进行中标志：独立于 feedLoading，手势刷新时不切换首屏骨架，只展示官方 PullToRefresh 指示器
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing = _isRefreshing.asStateFlow()
+
     init {
         viewModelScope.launch {
             // StateFlow 自身去重，无需 distinctUntilChanged
@@ -74,6 +78,25 @@ class TodayViewModel(
         val snapshot = _uiState.value
         if (snapshot.feedLoading || snapshot.feedLoadingMore) return
         if (snapshot.feed.items.isEmpty()) loadTodayData() else loadMore()
+    }
+
+    /**
+     * 下拉刷新：同步置位 [_isRefreshing]（官方 PullToRefresh 要求 onRefresh 内立即置 true），
+     * 复用首页加载链路但不置 feedLoading，已有内容保持可见，仅由官方指示器反馈刷新状态。
+     * 刷新期间切换来源会使本次结果作废，finally 中复位标志。
+     */
+    fun refresh() {
+        if (!_isRefreshing.compareAndSet(false, true)) return
+        val source = activeSource
+        val generation = sourceGeneration
+        viewModelScope.launch {
+            try {
+                nextFeedPage = 0
+                loadFeedPage(source, generation, replace = true)
+            } finally {
+                _isRefreshing.value = false
+            }
+        }
     }
 
     private suspend fun switchSource(source: AppSource) {

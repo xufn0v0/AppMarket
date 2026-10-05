@@ -16,9 +16,11 @@ import com.app.market.domain.repository.UpdatePreferencesRepository
 import com.app.market.platform.UiPlatform
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
@@ -89,7 +91,11 @@ class UpdatesViewModel(
 
     private val pendingDownloads = mutableSetOf<String>()
     private var initialCheckStarted = false
-    private var checkJob: kotlinx.coroutines.Job? = null
+    private var checkJob: Job? = null
+
+    // 下拉刷新进行中标志：与首屏 loading 分离，手势刷新时保留已有列表，只展示官方 PullToRefresh 指示器
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
     init {
         // Seed the last result for an instant warm launch — reconciled against the installed set so
@@ -149,12 +155,27 @@ class UpdatesViewModel(
         runCheck()
     }
 
-    private fun runCheck() {
+    /**
+     * 手动下拉刷新：同步置位 [_isRefreshing]（官方 PullToRefresh 要求 onRefresh 内立即置 true），
+     * 复用同一条检查链路，检查 Job 结束后复位。刷新期间已有列表不消失。
+     */
+    fun refresh() {
+        if (!_isRefreshing.compareAndSet(false, true)) return
+        viewModelScope.launch {
+            try {
+                runCheck().join()
+            } finally {
+                _isRefreshing.value = false
+            }
+        }
+    }
+
+    private fun runCheck(): Job {
         checkJob?.cancel()
         _raw.update {
             it.copy(loading = true, checkFailed = false, appListPermissionRequired = false)
         }
-        checkJob = viewModelScope.launch {
+        val job = viewModelScope.launch {
             try {
                 val selectedSource = prefs.updateSource.value
                 var latestLiveUpdates: List<MarketAppInfo>? = null
@@ -186,6 +207,8 @@ class UpdatesViewModel(
                 _raw.update { it.copy(loading = false, checkFailed = true, appListPermissionRequired = false) }
             }
         }
+        checkJob = job
+        return job
     }
 
     fun download(app: MarketAppInfo) {

@@ -54,6 +54,10 @@
     <string name="show_system_apps_summary">Include system app updates in the list</string>
     <string name="no_updates">All apps are up to date</string>
     <string name="update_check_failed">Update check failed</string>
+    <string name="pull_to_refresh">Pull down to refresh</string>
+    <string name="release_to_refresh">Release to refresh</string>
+    <string name="refreshing">Refreshing...</string>
+    <string name="refreshed">Refreshed successfully</string>
     <string name="go_to_settings">Grant permission</string>
     <string name="app_list_permission_required">App list access is required to check for updates</string>
     <string name="app_list_permission_refresh_hint">If permission has already been granted, pull down to refresh and load the app list.</string>
