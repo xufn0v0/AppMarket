@@ -6,8 +6,6 @@ import com.app.market.data.local.PreferencesDataSourceImpl
 import com.app.market.data.platform.DesktopThemePlatformPreferences
 import com.app.market.data.platform.ThemePlatformPreferences
 import com.app.market.data.platform.createHttpClient
-import com.app.market.data.remote.fdroid.FdroidSignatureVerifier
-import com.app.market.data.remote.fdroid.JvmFdroidSignatureVerifier
 import com.app.market.data.remote.xiaomi.platform.DesktopDeviceDefaultsDataSource
 import com.app.market.data.remote.xiaomi.platform.DesktopXiaomiDeviceIdentityDataSource
 import com.app.market.data.remote.xiaomi.platform.DeviceDefaultsDataSource
@@ -33,7 +31,6 @@ import org.koin.dsl.module
 
 internal actual val platformDataModule: Module = module {
     single { createHttpClient() }
-    singleOf(::JvmFdroidSignatureVerifier) { bind<FdroidSignatureVerifier>() }
     singleOf(::PreferencesDataSourceImpl) { bind<PreferencesDataSource>() }
     singleOf(::DesktopThemePlatformPreferences) { bind<ThemePlatformPreferences>() }
     singleOf(::DesktopDeviceDefaultsDataSource) { bind<DeviceDefaultsDataSource>() }

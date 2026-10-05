@@ -107,19 +107,6 @@ enum class AppSource(val token: String, val capabilities: SourceCapabilities) {
             todayFullCoverOverlay = false,
             supportsUpdates = true,
         ),
-    ),
-    FDROID(
-        "fdroid",
-        SourceCapabilities(
-            supportsComments = false,
-            supportsSameDeveloperApps = false,
-            prefersOpenLinkLaunch = false,
-            // F-Droid 只提供完整 APK，无增量补丁协议
-            reportsDeltaSize = false,
-            supportsTodayFeed = false,
-            todayFullCoverOverlay = false,
-            supportsUpdates = true,
-        ),
     );
 
     companion object {

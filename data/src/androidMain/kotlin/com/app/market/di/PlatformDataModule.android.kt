@@ -27,8 +27,6 @@ import com.app.market.data.local.PreferencesDataSourceImpl
 import com.app.market.data.platform.AndroidThemePlatformPreferences
 import com.app.market.data.platform.ThemePlatformPreferences
 import com.app.market.data.platform.createAndroidHttpClient
-import com.app.market.data.remote.fdroid.FdroidSignatureVerifier
-import com.app.market.data.remote.fdroid.JvmFdroidSignatureVerifier
 import com.app.market.data.remote.xiaomi.platform.AndroidDeviceDefaultsDataSource
 import com.app.market.data.remote.xiaomi.platform.AndroidInstalledApkHashRepositoryImpl
 import com.app.market.data.remote.xiaomi.platform.AndroidInstalledPackagesRepositoryImpl
@@ -54,7 +52,6 @@ import org.koin.dsl.module
 
 internal actual val platformDataModule: Module = module {
     single { createAndroidHttpClient() }
-    singleOf(::JvmFdroidSignatureVerifier) { bind<FdroidSignatureVerifier>() }
     singleOf(::PreferencesDataSourceImpl) { bind<PreferencesDataSource>() }
     singleOf(::AndroidThemePlatformPreferences) { bind<ThemePlatformPreferences>() }
     singleOf(::AndroidDeviceDefaultsDataSource) { bind<DeviceDefaultsDataSource>() }
